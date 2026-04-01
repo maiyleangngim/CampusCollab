@@ -1,5 +1,10 @@
+import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../models/study_group.dart';
+import '../models/discover_group.dart';
+import '../models/suggested_group.dart';
+import '../models/app_notification.dart';
+import '../models/deadline.dart';
 
 final List<StudyGroup> dummyGroups = [
   StudyGroup(
@@ -161,5 +166,220 @@ final List<Message> _generalMessages = [
     text: 'See everyone at 3 PM at the library B2!',
     timestamp: DateTime(2026, 3, 21, 11, 0),
     isMe: false,
+  ),
+];
+
+// =============================================================================
+// DISCOVER GROUPS
+// =============================================================================
+
+final List<DiscoverGroup> dummyDiscoverGroups = [
+  const DiscoverGroup(
+    id: 'dg1',
+    courseCode: 'CS161',
+    subject: 'COMPUTER SCIENCE',
+    colorValue: 0xFF1565C0,
+    accentColorValue: 0xFF1976D2,
+    name: 'Machine Learning',
+    description:
+        'Deep diving into sorting algorithms and Big O notation for the upcoming midterms. All skill levels welcome.',
+    memberCount: 42,
+    filterTags: ['All Groups', 'Course Code', 'Subject'],
+  ),
+  const DiscoverGroup(
+    id: 'dg2',
+    courseCode: 'BIO101',
+    subject: 'BOTANY',
+    colorValue: 0xFF065F46,
+    accentColorValue: 0xFFF59E0B,
+    name: 'Computer Vision',
+    description:
+        'Focusing on DNA-replication and transcription pathways. Weekly lab report reviews on Thursdays.',
+    memberCount: 8,
+    filterTags: ['All Groups', 'Course Code', 'Subject'],
+  ),
+  const DiscoverGroup(
+    id: 'dg3',
+    courseCode: 'ECON201',
+    subject: 'ECONOMICS',
+    colorValue: 0xFF92400E,
+    accentColorValue: 0xFFDC2626,
+    name: 'Mobile App',
+    description:
+        'Discussing global market trends and policy implications. General discussion and homework support.',
+    memberCount: 24,
+    filterTags: ['All Groups', 'Course Code', 'Homework Help'],
+  ),
+  const DiscoverGroup(
+    id: 'dg4',
+    courseCode: 'MTH301',
+    subject: 'MATHEMATICS',
+    colorValue: 0xFF6D28D9,
+    accentColorValue: 0xFF6D28D9,
+    name: 'Calculus III Study Hub',
+    description:
+        'Multi-variable calculus, partial derivatives and surface integrals. Exam prep every Sunday.',
+    memberCount: 31,
+    filterTags: ['All Groups', 'Subject', 'Exam Prep'],
+  ),
+  const DiscoverGroup(
+    id: 'dg5',
+    courseCode: 'ENG102',
+    subject: 'ENGLISH',
+    colorValue: 0xFF0E7490,
+    accentColorValue: 0xFF0E7490,
+    name: 'Essay Writing Workshop',
+    description:
+        'Peer review sessions and writing tips for academic essays. Open to all majors.',
+    memberCount: 15,
+    filterTags: ['All Groups', 'Subject', 'Homework Help', 'General'],
+  ),
+];
+
+// =============================================================================
+// SUGGESTED GROUPS  (Home screen)
+// =============================================================================
+
+final List<SuggestedGroup> dummySuggestedGroups = [
+  const SuggestedGroup(
+    id: 'sg1',
+    subject: 'MATHEMATICS',
+    colorValue: 0xFF1565C0,
+    iconName: 'functions',
+    name: 'Calculus III Study Hub',
+    description: 'Multi-variable calculus...',
+    badges: ['14+ SIZE', 'POSTS'],
+  ),
+  const SuggestedGroup(
+    id: 'sg2',
+    subject: 'RESEARCH',
+    colorValue: 0xFF6D28D9,
+    iconName: 'psychology',
+    name: 'AI Research Lab',
+    description: 'Collaborative LLM...',
+    badges: ['INVITE ONLY'],
+  ),
+  const SuggestedGroup(
+    id: 'sg3',
+    subject: 'SCIENCE',
+    colorValue: 0xFF0E7490,
+    iconName: 'nightlight',
+    name: 'Astrophysics Circle',
+    description: 'Analyzing spectral...',
+    badges: ['5 ACTIVE MEMBERS'],
+  ),
+];
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+final List<AppNotification> dummyNotifications = [
+  AppNotification(
+    id: 'n1',
+    type: NotificationType.mention,
+    title: 'Marcus Thorne mentioned you',
+    body: 'in UX Design Collective',
+    timestamp: DateTime(2026, 3, 31, 8, 0),
+    isRead: false,
+  ),
+  AppNotification(
+    id: 'n2',
+    type: NotificationType.mention,
+    title: 'Marcus Thorne mentioned you',
+    body: 'in UX Design Collective',
+    timestamp: DateTime(2026, 3, 31, 8, 5),
+  ),
+  AppNotification(
+    id: 'n3',
+    type: NotificationType.mention,
+    title: 'Marcus Thorne mentioned you',
+    body: 'in UX Design Collective',
+    timestamp: DateTime(2026, 3, 31, 8, 10),
+  ),
+  AppNotification(
+    id: 'n4',
+    type: NotificationType.mention,
+    title: 'Marcus Thorne mentioned you',
+    body: 'in UX Design Collective',
+    timestamp: DateTime(2026, 3, 31, 8, 15),
+    isRead: false,
+  ),
+  AppNotification(
+    id: 'n5',
+    type: NotificationType.mention,
+    title: 'Marcus Thorne mentioned you',
+    body: 'in UX Design Collective',
+    timestamp: DateTime(2026, 3, 31, 8, 20),
+  ),
+  AppNotification(
+    id: 'n6',
+    type: NotificationType.badge,
+    title: 'Academic Karma milestone reached!',
+    body: 'You\'ve earned the "Deep Researcher" badge.',
+    timestamp: DateTime(2026, 3, 30, 14, 0),
+    isRead: false,
+  ),
+  AppNotification(
+    id: 'n7',
+    type: NotificationType.message,
+    title: 'New Message',
+    body: 'in Micro-Biology Study Group',
+    timestamp: DateTime(2026, 3, 29, 10, 0),
+  ),
+];
+
+// =============================================================================
+// DEADLINES
+// =============================================================================
+
+final List<Deadline> dummyDeadlines = [
+  Deadline(
+    id: 'dl1',
+    date: DateTime(2026, 4, 3),
+    title: 'Problem Set 4 Due',
+    groupId: 'dg1',
+    groupName: 'Machine Learning',
+    colorValue: 0xFF1565C0,
+  ),
+  Deadline(
+    id: 'dl2',
+    date: DateTime(2026, 4, 7),
+    title: 'Lab Report Submission',
+    groupId: 'dg2',
+    groupName: 'Computer Vision',
+    colorValue: 0xFF065F46,
+  ),
+  Deadline(
+    id: 'dl3',
+    date: DateTime(2026, 4, 10),
+    title: 'Midterm Exam',
+    groupId: 'dg4',
+    groupName: 'Calculus III Study Hub',
+    colorValue: 0xFF6D28D9,
+  ),
+  Deadline(
+    id: 'dl4',
+    date: DateTime(2026, 4, 14),
+    title: 'Group Presentation',
+    groupId: 'ux1',
+    groupName: 'UX Design Collective',
+    colorValue: 0xFFF97316,
+  ),
+  Deadline(
+    id: 'dl5',
+    date: DateTime(2026, 4, 21),
+    title: 'Essay Draft Due',
+    groupId: 'dg5',
+    groupName: 'Essay Writing Workshop',
+    colorValue: 0xFF0E7490,
+  ),
+  Deadline(
+    id: 'dl6',
+    date: DateTime(2026, 4, 28),
+    title: 'Final Project Submission',
+    groupId: 'dg3',
+    groupName: 'Mobile App Group',
+    colorValue: 0xFFDC2626,
   ),
 ];

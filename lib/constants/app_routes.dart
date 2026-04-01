@@ -11,8 +11,11 @@
 class AppRoutes {
   AppRoutes._();
 
-  static const String login   = '/login';
-  static const String home    = '/home';
+  static const String login    = '/login';
+  static const String register = '/register';
+  static const String home     = '/home';
+  static const String discover  = '/discover';
+  static const String calendar  = '/calendar';
   static const String chats   = '/chats';
   static const String chat    = '/chat';        // passes StudyGroup as argument
   static const String profile = '/profile';

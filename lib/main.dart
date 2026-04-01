@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'constants/app_routes.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/register_screen.dart';
+import 'screens/discover/discover_screen.dart';
+import 'screens/calendar/calendar_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/chats/chats_screen.dart';
 import 'screens/chats/chat_detail_screen.dart';
@@ -28,7 +31,10 @@ class CampusCollabApp extends StatelessWidget {
 
       // ── Named routes ───────────────────────────────────────────────────────
       routes: {
-        AppRoutes.login:   (_) => const LoginScreen(),
+        AppRoutes.login:     (_) => const LoginScreen(),
+        AppRoutes.register:  (_) => const RegisterScreen(),
+        AppRoutes.discover:  (_) => const DiscoverScreen(),
+        AppRoutes.calendar:  (_) => const CalendarScreen(),
         AppRoutes.home:    (_) => const HomeScreen(),
         AppRoutes.chats:   (_) => const ChatsScreen(),
         AppRoutes.profile: (_) => const ProfileScreen(),
