@@ -409,7 +409,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
             children: [
               // ── Filter chips ────────────────────────────────────────────────
               Container(
-                color: AppTheme.surface,
+                color: AppTheme.background,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: SingleChildScrollView(
@@ -473,8 +473,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
                   ),
                 ),
               ),
-              const Divider(height: 1, color: AppTheme.divider),
-
               // ── Group list ──────────────────────────────────────────────────
               Expanded(
                 child: StreamBuilder<List<StudyGroup>>(
