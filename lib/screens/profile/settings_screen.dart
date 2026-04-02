@@ -342,8 +342,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         onTap: () async {
+          final nav = Navigator.of(context);
           await context.read<AppAuthProvider>().logout();
-          // AuthGate will automatically navigate to LoginScreen.
+          nav.pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
         },
       ),
     );

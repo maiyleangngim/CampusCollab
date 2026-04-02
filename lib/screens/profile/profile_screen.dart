@@ -39,22 +39,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _loadingProfile = false);
       return;
     }
-    final data = await FirestoreService().getUser(uid);
-    if (!mounted) return;
-    setState(() {
-      _loadingProfile = false;
-      if (data != null) {
-        _name = data['displayName'] ?? '';
-        _id = data['studentId'] ?? '';
-        _university = data['university'] ?? '';
-        _location = data['location'] ?? '';
-        _major = data['major'] ?? '';
-        _bio = data['bio'] ?? '';
-        _courses = List<String>.from(data['subjects'] ?? []);
-        _isLookingForGroup = data['isLookingForGroup'] ?? false;
-        _avatarUrl = data['avatarUrl'];
-      }
-    });
+    try {
+      final data = await FirestoreService().getUser(uid);
+      if (!mounted) return;
+      setState(() {
+        _loadingProfile = false;
+        if (data != null) {
+          _name = data['displayName'] ?? '';
+          _id = data['studentId'] ?? '';
+          _university = data['university'] ?? '';
+          _location = data['location'] ?? '';
+          _major = data['major'] ?? '';
+          _bio = data['bio'] ?? '';
+          _courses = List<String>.from(data['subjects'] ?? []);
+          _isLookingForGroup = data['isLookingForGroup'] ?? false;
+          _avatarUrl = data['avatarUrl'];
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingProfile = false);
+    }
   }
 
   void _openEditProfile() async {

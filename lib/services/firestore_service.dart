@@ -12,7 +12,11 @@ class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  String get _uid => _auth.currentUser!.uid;
+  String get _uid {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('Not authenticated');
+    return uid;
+  }
 
   // ── HELPERS ─────────────────────────────────────────────────────────────────
 
