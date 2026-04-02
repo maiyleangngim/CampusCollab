@@ -29,6 +29,14 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _navigateAfter(bool success) {
+    if (success) {
+      return Navigator.of(context)
+          .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+    }
+    return Future.value();
+  }
+
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
@@ -39,13 +47,14 @@ class _LoginScreenState extends State<LoginScreen> {
     );
     if (!mounted) return;
     setState(() => _isLoading = false);
-    if (!success && auth.error != null) {
+    if (success) {
+      _navigateAfter(true);
+    } else if (auth.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
       );
       auth.clearError();
     }
-    // AuthGate handles navigation on success automatically.
   }
 
   Future<void> _handleGoogle() async {
@@ -54,7 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await auth.loginWithGoogle();
     if (!mounted) return;
     setState(() => _isLoading = false);
-    if (!success && auth.error != null) {
+    if (success) {
+      _navigateAfter(true);
+    } else if (auth.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
       );
@@ -68,7 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await auth.loginAnonymously();
     if (!mounted) return;
     setState(() => _isLoading = false);
-    if (!success && auth.error != null) {
+    if (success) {
+      _navigateAfter(true);
+    } else if (auth.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
       );
