@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../constants/app_routes.dart';
 import 'package:campuscollab/screens/profile/settings_screen.dart';
+import 'package:campuscollab/screens/profile/edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,9 +15,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final int _currentIndex = 4;
 
   String _name = "Alex Thorne";
-  String _id = "ID: 2024020";
+  String _id = "2024020";
   String _university = "AUPP";
   String _location = "Phnom Penh";
+  String _major = "Software Development";
+  String _bio = "";
+  List<String> _courses = ["CS108B", "MATH51", "PWR1"];
+  bool _isLookingForGroup = false;
+
+  void _openEditProfile() async {
+    final result = await Navigator.push<ProfileData>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditProfileScreen(
+          initial: ProfileData(
+            name: _name,
+            studentId: _id,
+            university: _university,
+            location: _location,
+            major: _major,
+            bio: _bio,
+            courses: _courses,
+            isLookingForGroup: _isLookingForGroup,
+          ),
+        ),
+      ),
+    );
+    if (result != null) {
+      setState(() {
+        _name = result.name;
+        _id = result.studentId;
+        _university = result.university;
+        _location = result.location;
+        _major = result.major;
+        _bio = result.bio;
+        _courses = result.courses;
+        _isLookingForGroup = result.isLookingForGroup;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,18 +142,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Positioned(
                 bottom: -10,
                 right: -10,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    "EDIT",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                child: GestureDetector(
+                  onTap: _openEditProfile,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      "EDIT",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -149,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           Text(
-            _id,
+            'ID: $_id',
             style: const TextStyle(
               color: AppTheme.primary,
               fontWeight: FontWeight.bold,
@@ -160,19 +200,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           _buildIconInfo(Icons.location_on_outlined, _university),
           const SizedBox(height: 8),
+          _buildIconInfo(Icons.menu_book_outlined, _major),
+          const SizedBox(height: 8),
           _buildIconInfo(Icons.directions_walk, _location),
 
-          const SizedBox(height: 24),
+          if (_bio.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              _bio,
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ],
 
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildTag("CS108B"),
-              _buildTag("MATH51"),
-              _buildTag("PWR1"),
-            ],
-          ),
+          if (_isLookingForGroup) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.circle, color: Color(0xFF22C55E), size: 8),
+                  SizedBox(width: 6),
+                  Text(
+                    'Looking for a group',
+                    style: TextStyle(
+                      color: Color(0xFF15803D),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 20),
+
+          if (_courses.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _courses.map(_buildTag).toList(),
+            ),
         ],
       ),
     );
