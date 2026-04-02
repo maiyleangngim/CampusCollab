@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'message.dart';
 
 class StudyGroup {
@@ -41,6 +42,19 @@ class StudyGroup {
     required this.messages,
   });
 
+  static String _fmtTime(dynamic raw) {
+    if (raw == null) return '';
+    final dt = raw is Timestamp ? raw.toDate() : null;
+    if (dt == null) return '';
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${dt.day}/${dt.month}';
+  }
+
   factory StudyGroup.fromFirestore(Map<String, dynamic> data) => StudyGroup(
         id: data['id'] as String? ?? '',
         name: data['name'] as String? ?? '',
@@ -53,7 +67,7 @@ class StudyGroup {
         isOnline: data['isOnline'] as bool? ?? false,
         isPublic: data['isPublic'] as bool? ?? true,
         lastMessage: data['lastMessage'] as String? ?? '',
-        lastMessageTime: data['lastMessageTime']?.toString() ?? '',
+        lastMessageTime: _fmtTime(data['lastMessageTime']),
         inviteCode: data['inviteCode'] as String? ?? '',
         tags: List<String>.from(data['tags'] as List? ?? []),
         createdBy: data['createdBy'] as String? ?? '',

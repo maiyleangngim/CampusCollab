@@ -67,6 +67,7 @@ class GroupChatCard extends StatelessWidget {
                       Text(
                         group.lastMessageTime,
                         style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
