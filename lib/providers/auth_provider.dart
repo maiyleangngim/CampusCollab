@@ -14,6 +14,21 @@ class AppAuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  /// True only for anonymous or email-verified users.
+  bool get isEmailVerified =>
+      _user == null ? false : (_user!.isAnonymous || _user!.emailVerified);
+
+  /// Reload the Firebase user object (checks latest emailVerified status).
+  Future<void> reloadUser() async {
+    await _auth.currentUser?.reload();
+    _user = _auth.currentUser;
+    notifyListeners();
+  }
+
+  Future<void> sendVerificationEmail() async {
+    await _auth.currentUser?.sendEmailVerification();
+  }
+
   AppAuthProvider() {
     _auth.authStateChanges.listen((user) {
       _user = user;

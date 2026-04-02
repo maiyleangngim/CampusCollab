@@ -9,6 +9,7 @@ import 'providers/auth_provider.dart';
 import 'widgets/auth_gate.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
+import 'screens/auth/email_verification_screen.dart';
 import 'screens/discover/discover_screen.dart';
 import 'screens/calendar/calendar_screen.dart';
 import 'screens/home/home_screen.dart';
@@ -44,7 +45,8 @@ class CampusCollabApp extends StatelessWidget {
         home: const AuthGate(),
         routes: {
           AppRoutes.login:       (_) => const LoginScreen(),
-          AppRoutes.register:    (_) => const RegisterScreen(),
+          AppRoutes.register:          (_) => const RegisterScreen(),
+          AppRoutes.emailVerification: (_) => const EmailVerificationScreen(),
           AppRoutes.discover:    (_) => const DiscoverScreen(),
           AppRoutes.calendar:    (_) => const CalendarScreen(),
           AppRoutes.home:        (_) => const HomeScreen(),

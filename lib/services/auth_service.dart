@@ -32,6 +32,7 @@ class AuthService {
       'isLookingForGroup': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    await cred.user!.sendEmailVerification();
     return cred;
   }
 

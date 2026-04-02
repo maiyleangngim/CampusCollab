@@ -58,7 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = false);
     if (success) {
       Navigator.of(context)
-          .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+          .pushNamedAndRemoveUntil(AppRoutes.emailVerification, (route) => false);
     } else if (auth.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),

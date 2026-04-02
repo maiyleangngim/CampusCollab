@@ -1,8 +1,9 @@
 class AppRoutes {
   AppRoutes._();
 
-  static const String login         = '/login';
-  static const String register      = '/register';
+  static const String login             = '/login';
+  static const String register          = '/register';
+  static const String emailVerification = '/email-verification';
   static const String home          = '/home';
   static const String discover      = '/discover';
   static const String calendar      = '/calendar';
