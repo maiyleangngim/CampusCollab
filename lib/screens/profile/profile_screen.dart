@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../models/study_group.dart';
 import '../../theme/app_theme.dart';
 import '../../constants/app_routes.dart';
 import '../../services/firestore_service.dart';
@@ -349,87 +350,129 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildGroupsSummaryCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.divider),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE3F2FD),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.groups, color: AppTheme.primary),
+    return StreamBuilder<List<StudyGroup>>(
+      stream: FirestoreService().myGroupsStream(),
+      builder: (context, snapshot) {
+        final count = snapshot.data?.length ?? 0;
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppTheme.background,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.divider),
           ),
-          const SizedBox(width: 16),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(
-                "14 Groups",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: const Icon(Icons.groups, color: AppTheme.primary),
               ),
-              Text(
-                "ACTIVE MEMBERSHIPS",
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.textSecondary,
-                  letterSpacing: 0.5,
-                ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$count ${count == 1 ? 'Group' : 'Groups'}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const Text(
+                    'ACTIVE MEMBERSHIPS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildCurrentFocusSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Row(
+    return StreamBuilder<List<StudyGroup>>(
+      stream: FirestoreService().myGroupsStream(),
+      builder: (context, snapshot) {
+        final groups = snapshot.data ?? [];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.auto_awesome_motion, color: AppTheme.primary, size: 22),
-            SizedBox(width: 10),
-            Text(
-              "Current Focus",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
-              ),
+            const Row(
+              children: [
+                Icon(Icons.auto_awesome_motion,
+                    color: AppTheme.primary, size: 22),
+                SizedBox(width: 10),
+                Text(
+                  'Current Focus',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 16),
+            if (snapshot.connectionState == ConnectionState.waiting)
+              const Center(child: CircularProgressIndicator())
+            else if (groups.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Join a study group to see your focus areas here.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 13),
+                  ),
+                ),
+              )
+            else
+              ...groups.map((g) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildFocusCard(g),
+                  )),
           ],
-        ),
-        const SizedBox(height: 16),
-        _buildFocusCard(
-          "CS110",
-          "Systems Programming",
-          "Advanced memory management and concurrent process execution.",
-          [Colors.orange, Colors.blue, Colors.green],
-        ),
-        const SizedBox(height: 16),
-        _buildFocusCard(
-          "SIS400",
-          "Interaction Design",
-          "Human-centered design principles and high-fidelity prototyping.",
-          [Colors.purple, Colors.red],
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildFocusCard(String code, String title, String desc, List<Color> colors) {
+  static const List<Color> _memberColors = [
+    Color(0xFFF57C00),
+    Color(0xFF1A73E8),
+    Color(0xFF2E7D32),
+    Color(0xFF9C27B0),
+    Color(0xFFE53935),
+    Color(0xFF00838F),
+  ];
+
+  Widget _buildFocusCard(StudyGroup group) {
+    final templateColor = group.template == 'exam_prep'
+        ? const Color(0xFF6A1B9A)
+        : group.template == 'assignment'
+            ? const Color(0xFFE65100)
+            : AppTheme.primary;
+
+    final visibleMembers = group.memberCount.clamp(0, 4);
+    final overflow = group.memberCount - visibleMembers;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -449,66 +492,98 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                code,
-                style: const TextStyle(
-                  color: AppTheme.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+              if (group.courseCode.isNotEmpty)
+                Text(
+                  group.courseCode,
+                  style: TextStyle(
+                    color: templateColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: templateColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    group.template == 'exam_prep'
+                        ? 'Exam Prep'
+                        : group.template == 'assignment'
+                            ? 'Assignment'
+                            : 'General',
+                    style: TextStyle(
+                        color: templateColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
               const Icon(Icons.star, color: Color(0xFFD4AF37), size: 20),
             ],
           ),
           const SizedBox(height: 10),
           Text(
-            title,
+            group.name,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppTheme.textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            desc,
-            style: const TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 13,
-              height: 1.4,
+          if (group.description.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              group.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 13,
+                height: 1.4,
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 16),
           Row(
             children: [
               SizedBox(
-                width: 70,
+                width: (visibleMembers * 16.0) + 8,
                 height: 24,
                 child: Stack(
-                  children: List.generate(colors.length, (index) {
-                    return Positioned(
-                      left: index * 16.0,
+                  children: List.generate(visibleMembers, (i) => Positioned(
+                    left: i * 16.0,
+                    child: CircleAvatar(
+                      radius: 12,
+                      backgroundColor: AppTheme.surface,
                       child: CircleAvatar(
-                        radius: 12,
-                        backgroundColor: AppTheme.surface,
-                        child: CircleAvatar(
-                          radius: 10,
-                          backgroundColor: colors[index],
-                        ),
+                        radius: 10,
+                        backgroundColor:
+                            _memberColors[i % _memberColors.length],
                       ),
-                    );
-                  }),
+                    ),
+                  )),
                 ),
               ),
-              if (colors.length > 2)
-                const Text(
-                  "+2",
-                  style: TextStyle(
-                    fontSize: 10,
+              if (overflow > 0) ...[
+                const SizedBox(width: 4),
+                Text(
+                  '+$overflow',
+                  style: const TextStyle(
+                    fontSize: 11,
                     color: AppTheme.textSecondary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+              ],
+              const Spacer(),
+              Text(
+                '${group.memberCount} member${group.memberCount == 1 ? '' : 's'}',
+                style: const TextStyle(
+                    fontSize: 11, color: AppTheme.textSecondary),
+              ),
             ],
           ),
         ],
