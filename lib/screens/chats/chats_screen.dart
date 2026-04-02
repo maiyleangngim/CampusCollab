@@ -503,6 +503,7 @@ class _ActionCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 52,
@@ -520,6 +521,7 @@ class _ActionCard extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(label,
                         style: TextStyle(
@@ -530,14 +532,18 @@ class _ActionCard extends StatelessWidget {
                                 : AppTheme.textPrimary)),
                     const SizedBox(height: 3),
                     Text(subtitle,
+                        maxLines: 2,
+                        softWrap: true,
                         style: TextStyle(
                             fontSize: 12,
+                            height: 1.4,
                             color: isPrimary
                                 ? Colors.white.withValues(alpha: 0.8)
                                 : AppTheme.textSecondary)),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Icon(Icons.arrow_forward_ios,
                   size: 14,
                   color:
