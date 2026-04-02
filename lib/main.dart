@@ -15,6 +15,11 @@ import 'screens/home/home_screen.dart';
 import 'screens/chats/chats_screen.dart';
 import 'screens/chats/chat_detail_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/groups/create_group_screen.dart';
+import 'screens/groups/group_detail_screen.dart';
+import 'screens/tasks/group_tasks_screen.dart';
+import 'screens/resources/resource_vault_screen.dart';
+import 'screens/study/pomodoro_screen.dart';
 import 'models/study_group.dart';
 
 void main() async {
@@ -36,26 +41,37 @@ class CampusCollabApp extends StatelessWidget {
         title: 'CampusCollab',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-
-        // AuthGate decides whether to show HomeScreen or LoginScreen.
         home: const AuthGate(),
-
         routes: {
-          AppRoutes.login:    (_) => const LoginScreen(),
-          AppRoutes.register: (_) => const RegisterScreen(),
-          AppRoutes.discover: (_) => const DiscoverScreen(),
-          AppRoutes.calendar: (_) => const CalendarScreen(),
-          AppRoutes.home:     (_) => const HomeScreen(),
-          AppRoutes.chats:    (_) => const ChatsScreen(),
-          AppRoutes.profile:  (_) => const ProfileScreen(),
+          AppRoutes.login:       (_) => const LoginScreen(),
+          AppRoutes.register:    (_) => const RegisterScreen(),
+          AppRoutes.discover:    (_) => const DiscoverScreen(),
+          AppRoutes.calendar:    (_) => const CalendarScreen(),
+          AppRoutes.home:        (_) => const HomeScreen(),
+          AppRoutes.chats:       (_) => const ChatsScreen(),
+          AppRoutes.profile:     (_) => const ProfileScreen(),
+          AppRoutes.createGroup: (_) => const CreateGroupScreen(),
         },
-
         onGenerateRoute: (settings) {
-          if (settings.name == AppRoutes.chat) {
-            final group = settings.arguments as StudyGroup;
-            return MaterialPageRoute(
-              builder: (_) => ChatDetailScreen(group: group),
-            );
+          switch (settings.name) {
+            case AppRoutes.chat:
+              final group = settings.arguments as StudyGroup;
+              return MaterialPageRoute(builder: (_) => ChatDetailScreen(group: group));
+            case AppRoutes.groupDetail:
+              final group = settings.arguments as StudyGroup;
+              return MaterialPageRoute(builder: (_) => GroupDetailScreen(group: group));
+            case AppRoutes.groupTasks:
+              final group = settings.arguments as StudyGroup;
+              return MaterialPageRoute(
+                  builder: (_) => GroupTasksScreen(groupId: group.id, groupName: group.name));
+            case AppRoutes.resourceVault:
+              final group = settings.arguments as StudyGroup;
+              return MaterialPageRoute(
+                  builder: (_) => ResourceVaultScreen(groupId: group.id, groupName: group.name));
+            case AppRoutes.pomodoro:
+              final group = settings.arguments as StudyGroup;
+              return MaterialPageRoute(
+                  builder: (_) => PomodoroScreen(groupId: group.id, groupName: group.name));
           }
           return null;
         },

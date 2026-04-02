@@ -3,10 +3,10 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../constants/app_routes.dart';
-import '../../data/dummy_data.dart';
 import '../../models/study_group.dart';
-import '../../models/suggested_group.dart';
+import '../../services/firestore_service.dart';
 import '../../theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,17 +17,40 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
+  int _karma = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    FirestoreService().getKarmaTotal().then((k) {
+      if (mounted) setState(() => _karma = k);
+    });
+  }
+
+  void _openCreateGroup() async {
+    final result = await Navigator.pushNamed(context, AppRoutes.createGroup);
+    if (result != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Group created! Check your chats.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = user?.displayName ?? 'Student';
+    final firstName = displayName.split(' ').first;
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // ── App Bar ───────────────────────────────────────────────────────
+            // ── App Bar ─────────────────────────────────────────────────────
             SliverAppBar(
               floating: true,
               backgroundColor: AppTheme.surface,
@@ -40,10 +63,33 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               actions: [
+                // Karma badge
+                Container(
+                  margin: const EdgeInsets.only(right: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF8E1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFFFD54F)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.bolt, color: Color(0xFFF59E0B), size: 16),
+                      const SizedBox(width: 3),
+                      Text('$_karma',
+                          style: const TextStyle(
+                              color: Color(0xFFF59E0B),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13)),
+                    ],
+                  ),
+                ),
                 IconButton(
                   icon: const Icon(Icons.notifications_outlined,
                       color: AppTheme.textPrimary),
-                  onPressed: () {},
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.calendar),
                 ),
               ],
             ),
@@ -54,11 +100,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Hero Card ───────────────────────────────────────────
-                    _HeroCard(),
+                    // ── Hero Card ──────────────────────────────────────────
+                    _HeroCard(
+                      firstName: firstName,
+                      onCreateGroup: _openCreateGroup,
+                      onViewSchedule: () =>
+                          Navigator.pushNamed(context, AppRoutes.calendar),
+                    ),
                     const SizedBox(height: 28),
 
-                    // ── Active Groups ───────────────────────────────────────
+                    // ── Active Groups ──────────────────────────────────────
                     _SectionHeader(
                       title: 'Your Active Groups',
                       subtitle: 'Stay updated with your ongoing collaborations',
@@ -68,51 +119,49 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
-                      height: 160,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: dummyGroups.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 12),
-                        itemBuilder: (context, i) =>
-                            _ActiveGroupCard(group: dummyGroups[i]),
+                      height: 165,
+                      child: StreamBuilder<List<StudyGroup>>(
+                        stream: FirestoreService().myGroupsStream(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+                          final groups = snapshot.data ?? [];
+                          if (groups.isEmpty) {
+                            return _EmptyGroupsCard(
+                                onTap: _openCreateGroup);
+                          }
+                          return ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: groups.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: 12),
+                            itemBuilder: (context, i) => GestureDetector(
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                AppRoutes.chat,
+                                arguments: groups[i],
+                              ),
+                              child: _ActiveGroupCard(group: groups[i]),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(height: 28),
 
-                    // ── Suggested ───────────────────────────────────────────
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Suggested for Your Major',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.textPrimary,
-                                  )),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF97316),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text('TOP MATCH',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold)),
-                        ),
-                      ],
+                    // ── Discover Section ───────────────────────────────────
+                    _SectionHeader(
+                      title: 'Discover Groups',
+                      subtitle: 'Find groups matching your courses',
+                      actionLabel: 'Browse All',
+                      onAction: () =>
+                          Navigator.pushNamed(context, AppRoutes.discover),
                     ),
                     const SizedBox(height: 12),
-                    ...dummySuggestedGroups.map((s) => _SuggestedGroupTile(group: s)),
+                    _QuickActions(onCreateGroup: _openCreateGroup),
                     const SizedBox(height: 80),
                   ],
                 ),
@@ -122,21 +171,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // ── FAB ──────────────────────────────────────────────────────────────
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: _openCreateGroup,
         backgroundColor: AppTheme.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
 
-      // ── Bottom Nav ────────────────────────────────────────────────────────
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
+        currentIndex: 0,
         onTap: (i) {
-          setState(() => _currentIndex = i);
           if (i == 1) Navigator.pushNamed(context, AppRoutes.discover);
-        if (i == 2) Navigator.pushNamed(context, AppRoutes.chats);
-        if (i == 3) Navigator.pushNamed(context, AppRoutes.calendar);
+          if (i == 2) Navigator.pushNamed(context, AppRoutes.chats);
+          if (i == 3) Navigator.pushNamed(context, AppRoutes.calendar);
           if (i == 4) Navigator.pushNamed(context, AppRoutes.profile);
         },
         type: BottomNavigationBarType.fixed,
@@ -177,6 +223,16 @@ class _HomeScreenState extends State<HomeScreen> {
 // HERO CARD
 // =============================================================================
 class _HeroCard extends StatelessWidget {
+  final String firstName;
+  final VoidCallback onCreateGroup;
+  final VoidCallback onViewSchedule;
+
+  const _HeroCard({
+    required this.firstName,
+    required this.onCreateGroup,
+    required this.onViewSchedule,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -187,7 +243,7 @@ class _HeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -196,28 +252,40 @@ class _HeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Ready to Collab?',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'You have 3 study sessions scheduled for today. Stay on track with your groups!',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-              height: 1.4,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hey, $firstName! 👋',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Ready to collaborate today?',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                          height: 1.4),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
+            child: ElevatedButton.icon(
+              onPressed: onCreateGroup,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Create a Study Group'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
@@ -225,15 +293,15 @@ class _HeroCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 13),
               ),
-              child: const Text('Add New Groups',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {},
+            child: OutlinedButton.icon(
+              onPressed: onViewSchedule,
+              icon: const Icon(Icons.calendar_today_outlined, size: 18),
+              label: const Text('View Schedule'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.primary,
                 side: const BorderSide(color: AppTheme.primary),
@@ -241,8 +309,6 @@ class _HeroCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 13),
               ),
-              child: const Text('View Schedule',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -269,53 +335,96 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                )),
-            GestureDetector(
-              onTap: onAction,
-              child: Text(actionLabel,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
                   style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.primaryLight,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
                   )),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(subtitle,
+                  style: const TextStyle(
+                      fontSize: 12, color: AppTheme.textSecondary)),
+            ],
+          ),
         ),
-        const SizedBox(height: 4),
-        Text(subtitle,
-            style: const TextStyle(
-                fontSize: 12, color: AppTheme.textSecondary)),
+        GestureDetector(
+          onTap: onAction,
+          child: Text(actionLabel,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppTheme.primaryLight,
+                fontWeight: FontWeight.w600,
+              )),
+        ),
       ],
     );
   }
 }
 
 // =============================================================================
-// ACTIVE GROUP CARD (horizontal scroll)
+// EMPTY GROUPS CARD
+// =============================================================================
+class _EmptyGroupsCard extends StatelessWidget {
+  final VoidCallback onTap;
+  const _EmptyGroupsCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.divider, style: BorderStyle.solid),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.group_add_outlined,
+                size: 32, color: AppTheme.textSecondary.withValues(alpha: 0.5)),
+            const SizedBox(height: 8),
+            const Text('No active groups yet',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+            const SizedBox(height: 4),
+            const Text('Tap to create your first group',
+                style: TextStyle(
+                    color: AppTheme.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// ACTIVE GROUP CARD
 // =============================================================================
 class _ActiveGroupCard extends StatelessWidget {
   final StudyGroup group;
 
   const _ActiveGroupCard({required this.group});
 
-  Color get _iconColor {
+  Color get _color {
+    if (group.template == 'exam_prep') return const Color(0xFF7C3AED);
+    if (group.template == 'assignment') return const Color(0xFFF97316);
     final colors = [
       AppTheme.primary,
-      const Color(0xFF6D28D9),
       const Color(0xFF0E7490),
       const Color(0xFF065F46),
-      const Color(0xFF92400E),
     ];
     return colors[group.id.hashCode % colors.length];
   }
@@ -323,14 +432,14 @@ class _ActiveGroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
+      width: 155,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -346,11 +455,11 @@ class _ActiveGroupCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: _iconColor.withValues(alpha:0.12),
+                  color: _color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.group_outlined,
-                    color: _iconColor, size: 20),
+                child:
+                    Icon(Icons.group_outlined, color: _color, size: 20),
               ),
               if (group.isOnline)
                 Container(
@@ -369,6 +478,15 @@ class _ActiveGroupCard extends StatelessWidget {
             ],
           ),
           const Spacer(),
+          if (group.courseCode.isNotEmpty) ...[
+            Text(group.courseCode,
+                style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: _color,
+                    letterSpacing: 0.5)),
+            const SizedBox(height: 2),
+          ],
           Text(
             group.name,
             style: const TextStyle(
@@ -385,7 +503,7 @@ class _ActiveGroupCard extends StatelessWidget {
               const Icon(Icons.people_outline,
                   size: 12, color: AppTheme.textSecondary),
               const SizedBox(width: 4),
-              Text('${group.memberCount} members',
+              Text('${group.memberCount}',
                   style: const TextStyle(
                       fontSize: 11, color: AppTheme.textSecondary)),
             ],
@@ -397,103 +515,95 @@ class _ActiveGroupCard extends StatelessWidget {
 }
 
 // =============================================================================
-// SUGGESTED GROUP TILE
+// QUICK ACTIONS
 // =============================================================================
-class _SuggestedGroupTile extends StatelessWidget {
-  final SuggestedGroup group;
-
-  const _SuggestedGroupTile({required this.group});
+class _QuickActions extends StatelessWidget {
+  final VoidCallback onCreateGroup;
+  const _QuickActions({required this.onCreateGroup});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return Row(
+      children: [
+        Expanded(
+          child: _QuickCard(
+            icon: Icons.explore_outlined,
+            title: 'Browse Groups',
+            subtitle: 'Find public groups',
+            color: AppTheme.primary,
+            onTap: () => Navigator.pushNamed(context, AppRoutes.discover),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Thumbnail
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: group.color,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(group.icon, color: Colors.white, size: 26),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _QuickCard(
+            icon: Icons.vpn_key_outlined,
+            title: 'Join by Code',
+            subtitle: 'Use an invite code',
+            color: const Color(0xFF059669),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.chats),
           ),
-          const SizedBox(width: 14),
+        ),
+      ],
+    );
+  }
+}
 
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(group.subject,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: group.color,
-                          letterSpacing: 0.5,
-                        )),
-                    const SizedBox(width: 6),
-                    ...group.badges.map((b) => Container(
-                          margin: const EdgeInsets.only(right: 4),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.background,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(b,
-                              style: const TextStyle(
-                                  fontSize: 9,
-                                  color: AppTheme.textSecondary,
-                                  fontWeight: FontWeight.w500)),
-                        )),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(group.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
-                    )),
-                const SizedBox(height: 2),
-                Text(group.description,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppTheme.textSecondary)),
-              ],
-            ),
-          ),
+class _QuickCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
 
-          // Join button
-          const SizedBox(width: 8),
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: AppTheme.background,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.divider),
+  const _QuickCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: const Icon(Icons.add,
-                size: 18, color: AppTheme.textPrimary),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 10),
+            Text(title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: AppTheme.textPrimary)),
+            const SizedBox(height: 2),
+            Text(subtitle,
+                style: const TextStyle(
+                    fontSize: 11, color: AppTheme.textSecondary)),
+          ],
+        ),
       ),
     );
   }

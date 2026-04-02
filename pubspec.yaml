@@ -48,6 +48,15 @@ dependencies:
   # Social sign-in
   google_sign_in: ^6.2.2
 
+  # QR code generation
+  qr_flutter: ^4.1.0
+
+  # Share sheet
+  share_plus: ^10.0.0
+
+  # URL launching
+  url_launcher: ^6.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

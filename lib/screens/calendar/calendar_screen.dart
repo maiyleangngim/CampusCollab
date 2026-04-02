@@ -3,10 +3,11 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../constants/app_routes.dart';
-import '../../data/dummy_data.dart';
-import '../../models/app_notification.dart';
-import '../../models/deadline.dart';
+import '../../models/study_group.dart';
+import '../../models/study_session.dart';
+import '../../services/firestore_service.dart';
 import '../../theme/app_theme.dart';
 
 // =============================================================================
@@ -94,108 +95,24 @@ class _NotificationsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
-      children: [
-        const Text('Notifications',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
-            )),
-        const SizedBox(height: 20),
-        const _SectionLabel('EARLIER'),
-        const SizedBox(height: 8),
-        ...dummyNotifications.map((n) => _NotifTile(notif: n)),
-      ],
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String label;
-  const _SectionLabel(this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(label,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textSecondary,
-          letterSpacing: 1.2,
-        ));
-  }
-}
-
-class _NotifTile extends StatelessWidget {
-  final AppNotification notif;
-  const _NotifTile({required this.notif});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 2),
-      decoration: BoxDecoration(
-        color: notif.isRead
-            ? Colors.transparent
-            : AppTheme.primary.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        leading: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: notif.iconColor.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(notif.icon, color: notif.iconColor, size: 20),
-            ),
-            if (!notif.isRead)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        title: RichText(
-          text: TextSpan(
-            style: const TextStyle(
-                fontSize: 14,
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.notifications_none,
+              size: 56,
+              color: AppTheme.textSecondary.withValues(alpha: 0.3)),
+          const SizedBox(height: 12),
+          const Text('No notifications yet',
+              style: TextStyle(
                 color: AppTheme.textPrimary,
-                fontWeight: FontWeight.w500),
-            children: [
-              TextSpan(text: notif.title),
-              const TextSpan(text: ' '),
-              TextSpan(
-                text: notif.body,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-              ),
-            ],
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 3),
-          child: Text(notif.timeLabel,
-              style: const TextStyle(
-                  fontSize: 12, color: AppTheme.textSecondary)),
-        ),
-        trailing: const Icon(Icons.chevron_right,
-            color: AppTheme.textSecondary, size: 18),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              )),
+          const SizedBox(height: 6),
+          const Text('Study session reminders will appear here',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+        ],
       ),
     );
   }
@@ -213,44 +130,9 @@ class _CalendarTab extends StatefulWidget {
 }
 
 class _CalendarTabState extends State<_CalendarTab> {
-  DateTime _focusedMonth = DateTime(2026, 4);
+  final FirestoreService _firestore = FirestoreService();
+  DateTime _focusedMonth = DateTime.now();
   DateTime? _selectedDay;
-
-  Set<int> get _deadlineDays => dummyDeadlines
-      .where((d) =>
-          d.date.year == _focusedMonth.year &&
-          d.date.month == _focusedMonth.month)
-      .map((d) => d.date.day)
-      .toSet();
-
-  Map<int, Color> get _deadlineDayColors {
-    final map = <int, Color>{};
-    for (final d in dummyDeadlines) {
-      if (d.date.year == _focusedMonth.year &&
-          d.date.month == _focusedMonth.month) {
-        map[d.date.day] = d.color;
-      }
-    }
-    return map;
-  }
-
-  List<Deadline> get _selectedDeadlines {
-    if (_selectedDay == null) return [];
-    return dummyDeadlines
-        .where((d) =>
-            d.date.year == _selectedDay!.year &&
-            d.date.month == _selectedDay!.month &&
-            d.date.day == _selectedDay!.day)
-        .toList();
-  }
-
-  List<Deadline> get _upcomingDeadlines {
-    final now = DateTime.now();
-    return dummyDeadlines
-        .where((d) => !d.date.isBefore(now))
-        .toList()
-      ..sort((a, b) => a.date.compareTo(b.date));
-  }
 
   void _prevMonth() => setState(() {
         _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1);
@@ -262,70 +144,158 @@ class _CalendarTabState extends State<_CalendarTab> {
         _selectedDay = null;
       });
 
+  void _showAddSession(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _AddSessionSheet(
+        initialDate: _selectedDay ?? DateTime.now(),
+        onAdded: () {},
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _MonthHeader(
-                  month: _focusedMonth,
-                  onPrev: _prevMonth,
-                  onNext: _nextMonth),
-              const SizedBox(height: 12),
-              _WeekdayRow(),
-              const SizedBox(height: 4),
-              _DayGrid(
-                focusedMonth: _focusedMonth,
-                selectedDay: _selectedDay,
-                deadlineDays: _deadlineDays,
-                deadlineColors: _deadlineDayColors,
-                onDayTap: (day) => setState(() => _selectedDay = day),
-              ),
-            ],
-          ),
-        ),
+    return StreamBuilder<List<StudySession>>(
+      stream: _firestore.mySessionsStream(),
+      builder: (context, snapshot) {
+        final sessions = snapshot.data ?? [];
+        final sessionDayColors = _buildSessionDayColors(sessions);
+        final sessionDays = sessionDayColors.keys.toSet();
 
-        const SizedBox(height: 20),
+        final selectedSessions = _selectedDay == null
+            ? <StudySession>[]
+            : sessions
+                .where((s) =>
+                    s.startTime.year == _selectedDay!.year &&
+                    s.startTime.month == _selectedDay!.month &&
+                    s.startTime.day == _selectedDay!.day)
+                .toList();
 
-        if (_selectedDeadlines.isNotEmpty) ...[
-          Text(
-            _formatDate(_selectedDay!),
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+        final now = DateTime.now();
+        final upcomingSessions = sessions
+            .where((s) => s.startTime.isAfter(now))
+            .toList()
+          ..sort((a, b) => a.startTime.compareTo(b.startTime));
+
+        return Stack(
+          children: [
+            ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              children: [
+                // ── Calendar Card ─────────────────────────────────────────
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _MonthHeader(
+                          month: _focusedMonth,
+                          onPrev: _prevMonth,
+                          onNext: _nextMonth),
+                      const SizedBox(height: 12),
+                      _WeekdayRow(),
+                      const SizedBox(height: 4),
+                      _DayGrid(
+                        focusedMonth: _focusedMonth,
+                        selectedDay: _selectedDay,
+                        sessionDays: sessionDays,
+                        sessionColors: sessionDayColors,
+                        onDayTap: (day) => setState(() => _selectedDay = day),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // ── Selected Day Sessions ─────────────────────────────────
+                if (selectedSessions.isNotEmpty) ...[
+                  Text(
+                    _formatDate(_selectedDay!),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...selectedSessions.map((s) => _SessionTile(session: s)),
+                  const SizedBox(height: 16),
+                ],
+
+                // ── Upcoming Sessions ─────────────────────────────────────
+                const Text('Upcoming Sessions',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    )),
+                const SizedBox(height: 12),
+
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  const Center(child: CircularProgressIndicator())
+                else if (upcomingSessions.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'No upcoming sessions.\nSchedule one with the + button!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: AppTheme.textSecondary, fontSize: 13),
+                      ),
+                    ),
+                  )
+                else
+                  ...upcomingSessions.map((s) => _SessionTile(session: s)),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          ..._selectedDeadlines.map((d) => _DeadlineTile(deadline: d)),
-          const SizedBox(height: 16),
-        ],
 
-        const Text('Upcoming Deadlines',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
-            )),
-        const SizedBox(height: 12),
-        ..._upcomingDeadlines.map((d) => _DeadlineTile(deadline: d)),
-      ],
+            // ── FAB ───────────────────────────────────────────────────────
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: FloatingActionButton(
+                onPressed: () => _showAddSession(context),
+                backgroundColor: AppTheme.primary,
+                child: const Icon(Icons.add, color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
     );
+  }
+
+  Map<int, Color> _buildSessionDayColors(List<StudySession> sessions) {
+    final map = <int, Color>{};
+    for (final s in sessions) {
+      if (s.startTime.year == _focusedMonth.year &&
+          s.startTime.month == _focusedMonth.month) {
+        map[s.startTime.day] = AppTheme.primary;
+      }
+    }
+    return map;
   }
 
   String _formatDate(DateTime d) {
@@ -334,6 +304,409 @@ class _CalendarTabState extends State<_CalendarTab> {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${months[d.month - 1]} ${d.day}, ${d.year}';
+  }
+}
+
+// =============================================================================
+// ADD SESSION BOTTOM SHEET
+// =============================================================================
+
+class _AddSessionSheet extends StatefulWidget {
+  final DateTime initialDate;
+  final VoidCallback onAdded;
+
+  const _AddSessionSheet({required this.initialDate, required this.onAdded});
+
+  @override
+  State<_AddSessionSheet> createState() => _AddSessionSheetState();
+}
+
+class _AddSessionSheetState extends State<_AddSessionSheet> {
+  final _firestore = FirestoreService();
+  final _titleCtrl = TextEditingController();
+  final _locationCtrl = TextEditingController();
+  bool _saving = false;
+  StudyGroup? _selectedGroup;
+  DateTime? _startTime;
+  DateTime? _endTime;
+
+  @override
+  void initState() {
+    super.initState();
+    final base = widget.initialDate;
+    final now = DateTime.now();
+    _startTime = DateTime(base.year, base.month, base.day, now.hour, 0);
+    _endTime = DateTime(base.year, base.month, base.day, now.hour + 1, 0);
+  }
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _locationCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickTime(bool isStart) async {
+    final initial = isStart ? _startTime! : _endTime!;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        final updated = DateTime(
+          initial.year, initial.month, initial.day,
+          picked.hour, picked.minute,
+        );
+        if (isStart) {
+          _startTime = updated;
+        } else {
+          _endTime = updated;
+        }
+      });
+    }
+  }
+
+  Future<void> _save() async {
+    if (_titleCtrl.text.trim().isEmpty) return;
+    if (_selectedGroup == null) return;
+    if (_startTime == null || _endTime == null) return;
+    setState(() => _saving = true);
+    try {
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      final session = StudySession(
+        id: '',
+        title: _titleCtrl.text.trim(),
+        groupId: _selectedGroup!.id,
+        groupName: _selectedGroup!.name,
+        startTime: _startTime!,
+        endTime: _endTime!,
+        location: _locationCtrl.text.trim().isEmpty
+            ? null
+            : _locationCtrl.text.trim(),
+        createdBy: uid,
+      );
+      await _firestore.addSession(_selectedGroup!.id, session);
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onAdded();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), behavior: SnackBarBehavior.floating),
+        );
+      }
+      setState(() => _saving = false);
+    }
+  }
+
+  String _fmtTime(DateTime dt) {
+    final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final m = dt.minute.toString().padLeft(2, '0');
+    final ampm = dt.hour < 12 ? 'AM' : 'PM';
+    return '$h:$m $ampm';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20, right: 20, top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Schedule Session',
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary)),
+          const SizedBox(height: 16),
+
+          // Title
+          TextField(
+            controller: _titleCtrl,
+            decoration: InputDecoration(
+              hintText: 'Session title',
+              hintStyle: const TextStyle(color: AppTheme.textSecondary),
+              filled: true,
+              fillColor: AppTheme.background,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Group picker
+          StreamBuilder<List<StudyGroup>>(
+            stream: _firestore.myGroupsStream(),
+            builder: (context, snap) {
+              final groups = snap.data ?? [];
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.background,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<StudyGroup>(
+                    value: _selectedGroup,
+                    isExpanded: true,
+                    hint: const Text('Select a group',
+                        style: TextStyle(color: AppTheme.textSecondary)),
+                    items: groups
+                        .map((g) => DropdownMenuItem(
+                              value: g,
+                              child: Text(g.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      color: AppTheme.textPrimary, fontSize: 14)),
+                            ))
+                        .toList(),
+                    onChanged: (g) => setState(() => _selectedGroup = g),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+
+          // Time row
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _pickTime(true),
+                  child: _TimePill(label: 'Start', time: _fmtTime(_startTime!)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _pickTime(false),
+                  child: _TimePill(label: 'End', time: _fmtTime(_endTime!)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Location (optional)
+          TextField(
+            controller: _locationCtrl,
+            decoration: InputDecoration(
+              hintText: 'Location (optional)',
+              hintStyle: const TextStyle(color: AppTheme.textSecondary),
+              prefixIcon: const Icon(Icons.location_on_outlined,
+                  color: AppTheme.textSecondary, size: 18),
+              filled: true,
+              fillColor: AppTheme.background,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _saving ? null : _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 20, height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Text('Schedule',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimePill extends StatelessWidget {
+  final String label;
+  final String time;
+  const _TimePill({required this.label, required this.time});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.access_time, size: 16, color: AppTheme.textSecondary),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 10, color: AppTheme.textSecondary)),
+              Text(time,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// SESSION TILE
+// =============================================================================
+
+class _SessionTile extends StatelessWidget {
+  final StudySession session;
+  const _SessionTile({required this.session});
+
+  @override
+  Widget build(BuildContext context) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+
+    String fmtTime(DateTime dt) {
+      final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final m = dt.minute.toString().padLeft(2, '0');
+      final ampm = dt.hour < 12 ? 'AM' : 'PM';
+      return '$h:$m $ampm';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  months[session.startTime.month - 1].toUpperCase(),
+                  style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primary),
+                ),
+                Text(
+                  '${session.startTime.day}',
+                  style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(session.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
+                    )),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    const Icon(Icons.group_outlined,
+                        size: 13, color: AppTheme.primary),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(session.groupName,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12, color: AppTheme.textSecondary)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time,
+                        size: 13, color: AppTheme.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${fmtTime(session.startTime)} – ${fmtTime(session.endTime)}',
+                      style: const TextStyle(
+                          fontSize: 12, color: AppTheme.textSecondary),
+                    ),
+                  ],
+                ),
+                if (session.location != null) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined,
+                          size: 13, color: AppTheme.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(session.location!,
+                          style: const TextStyle(
+                              fontSize: 12, color: AppTheme.textSecondary)),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Container(
+            width: 4,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppTheme.primary,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -407,15 +780,15 @@ class _WeekdayRow extends StatelessWidget {
 class _DayGrid extends StatelessWidget {
   final DateTime focusedMonth;
   final DateTime? selectedDay;
-  final Set<int> deadlineDays;
-  final Map<int, Color> deadlineColors;
+  final Set<int> sessionDays;
+  final Map<int, Color> sessionColors;
   final void Function(DateTime) onDayTap;
 
   const _DayGrid({
     required this.focusedMonth,
     required this.selectedDay,
-    required this.deadlineDays,
-    required this.deadlineColors,
+    required this.sessionDays,
+    required this.sessionColors,
     required this.onDayTap,
   });
 
@@ -441,7 +814,7 @@ class _DayGrid extends StatelessWidget {
           date.year == selectedDay!.year &&
           date.month == selectedDay!.month &&
           date.day == selectedDay!.day;
-      final hasDeadline = deadlineDays.contains(day);
+      final hasSession = sessionDays.contains(day);
 
       cells.add(
         GestureDetector(
@@ -476,12 +849,12 @@ class _DayGrid extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              if (hasDeadline)
+              if (hasSession)
                 Container(
                   width: 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: deadlineColors[day] ?? AppTheme.primary,
+                    color: sessionColors[day] ?? AppTheme.primary,
                     shape: BoxShape.circle,
                   ),
                 )
@@ -499,101 +872,6 @@ class _DayGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       childAspectRatio: 0.85,
       children: cells,
-    );
-  }
-}
-
-class _DeadlineTile extends StatelessWidget {
-  final Deadline deadline;
-
-  const _DeadlineTile({required this.deadline});
-
-  @override
-  Widget build(BuildContext context) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            decoration: BoxDecoration(
-              color: deadline.color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  months[deadline.date.month - 1].toUpperCase(),
-                  style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: deadline.color),
-                ),
-                Text(
-                  '${deadline.date.day}',
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: deadline.color),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(deadline.title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
-                    )),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    Icon(Icons.group_outlined,
-                        size: 13, color: deadline.color),
-                    const SizedBox(width: 4),
-                    Text(deadline.groupName,
-                        style: const TextStyle(
-                            fontSize: 12, color: AppTheme.textSecondary)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          Container(
-            width: 4,
-            height: 40,
-            decoration: BoxDecoration(
-              color: deadline.color,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

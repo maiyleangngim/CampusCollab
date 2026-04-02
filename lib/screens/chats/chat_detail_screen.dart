@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../constants/app_routes.dart';
 import '../../models/study_group.dart';
 import '../../models/message.dart';
 import '../../services/firestore_service.dart';
 import '../../services/storage_service.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/message_bubble.dart';
 import '../../widgets/chat_input_bar.dart';
 
@@ -51,46 +53,131 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send image: $e'), behavior: SnackBarBehavior.floating),
+          SnackBar(
+              content: Text('Failed to send image: $e'),
+              behavior: SnackBarBehavior.floating),
         );
       }
     }
   }
 
+  Color get _templateColor {
+    if (widget.group.template == 'exam_prep') return const Color(0xFF7C3AED);
+    if (widget.group.template == 'assignment') return const Color(0xFFF97316);
+    return AppTheme.primary;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.surface,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text(
-              widget.group.name,
-              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 15),
-              overflow: TextOverflow.ellipsis,
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: _templateColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.group_outlined, color: _templateColor, size: 20),
             ),
-            Text(
-              '${widget.group.memberCount} Members • ${widget.group.isOnline ? "Online" : "Offline"}',
-              style: TextStyle(color: Colors.grey[500], fontSize: 12),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.group.name,
+                    style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    '${widget.group.memberCount} members',
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.black),
-            onPressed: () {},
+            icon: const Icon(Icons.info_outline, color: AppTheme.primary),
+            onPressed: () => Navigator.pushNamed(
+              context,
+              AppRoutes.groupDetail,
+              arguments: widget.group,
+            ),
           ),
         ],
       ),
       body: Column(
         children: [
+          // ── Quick Action Bar ──────────────────────────────────────────────
+          Container(
+            color: AppTheme.surface,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _ActionButton(
+                  icon: Icons.checklist_outlined,
+                  label: 'Tasks',
+                  color: AppTheme.primary,
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.groupTasks,
+                    arguments: widget.group,
+                  ),
+                ),
+                _ActionButton(
+                  icon: Icons.folder_outlined,
+                  label: 'Resources',
+                  color: const Color(0xFF059669),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.resourceVault,
+                    arguments: widget.group,
+                  ),
+                ),
+                _ActionButton(
+                  icon: Icons.timer_outlined,
+                  label: 'Pomodoro',
+                  color: const Color(0xFFDC2626),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.pomodoro,
+                    arguments: widget.group,
+                  ),
+                ),
+                _ActionButton(
+                  icon: Icons.people_outline,
+                  label: 'Members',
+                  color: const Color(0xFF7C3AED),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.groupDetail,
+                    arguments: widget.group,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: AppTheme.divider),
+
+          // ── Messages ──────────────────────────────────────────────────────
           Expanded(
             child: StreamBuilder<List<Message>>(
               stream: _firestore.messagesStream(widget.group.id),
@@ -100,11 +187,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 }
                 final messages = snapshot.data ?? [];
                 if (messages.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No messages yet.\nSay hello!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey),
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.chat_bubble_outline,
+                            size: 48,
+                            color: AppTheme.textSecondary.withValues(alpha: 0.3)),
+                        const SizedBox(height: 12),
+                        const Text('No messages yet',
+                            style: TextStyle(
+                                color: AppTheme.textSecondary, fontSize: 15)),
+                        const SizedBox(height: 4),
+                        const Text('Say hello to your group!',
+                            style: TextStyle(
+                                color: AppTheme.textSecondary, fontSize: 13)),
+                      ],
                     ),
                   );
                 }
@@ -119,11 +217,51 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               },
             ),
           ),
-          const Divider(height: 1),
+          const Divider(height: 1, color: AppTheme.divider),
           ChatInputBar(
             onSend: _sendText,
             onImagePick: _sendImage,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 4),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w500)),
         ],
       ),
     );
