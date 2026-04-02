@@ -7,6 +7,7 @@ import '../models/discover_group.dart';
 import '../models/task.dart';
 import '../models/study_session.dart';
 import '../models/resource_item.dart';
+import '../models/chat_folder.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -425,5 +426,58 @@ class FirestoreService {
         .collection('resources')
         .doc(resourceId)
         .delete();
+  }
+
+  // ── CHAT FOLDERS ─────────────────────────────────────────────────────────────
+
+  Stream<List<ChatFolder>> foldersStream() {
+    return _db
+        .collection('users')
+        .doc(_uid)
+        .collection('chatFolders')
+        .orderBy('createdAt')
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => ChatFolder.fromFirestore(d.id, d.data()))
+            .toList());
+  }
+
+  Future<void> createFolder(String name) async {
+    await _db
+        .collection('users')
+        .doc(_uid)
+        .collection('chatFolders')
+        .add({
+      'name': name,
+      'groupIds': [],
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> deleteFolder(String folderId) {
+    return _db
+        .collection('users')
+        .doc(_uid)
+        .collection('chatFolders')
+        .doc(folderId)
+        .delete();
+  }
+
+  Future<void> addGroupToFolder(String folderId, String groupId) {
+    return _db
+        .collection('users')
+        .doc(_uid)
+        .collection('chatFolders')
+        .doc(folderId)
+        .update({'groupIds': FieldValue.arrayUnion([groupId])});
+  }
+
+  Future<void> removeGroupFromFolder(String folderId, String groupId) {
+    return _db
+        .collection('users')
+        .doc(_uid)
+        .collection('chatFolders')
+        .doc(folderId)
+        .update({'groupIds': FieldValue.arrayRemove([groupId])});
   }
 }

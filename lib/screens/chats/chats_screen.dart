@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_routes.dart';
+import '../../models/chat_folder.dart';
 import '../../models/study_group.dart';
 import '../../services/firestore_service.dart';
 import '../../theme/app_theme.dart';
@@ -14,7 +15,9 @@ class ChatsScreen extends StatefulWidget {
 }
 
 class _ChatsScreenState extends State<ChatsScreen> {
-  String _activeFilter = 'All';
+  // null = 'All', 'unread' = Unread, otherwise a folder id
+  String? _activeFolderId;
+  final FirestoreService _firestore = FirestoreService();
 
   void _openCreateGroup() async {
     final result = await Navigator.pushNamed(context, AppRoutes.createGroup);
@@ -208,118 +211,410 @@ class _ChatsScreenState extends State<ChatsScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
+  void _showCreateFolder() {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
-        elevation: 0.5,
-        title: const Text('Chats',
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('New Folder',
             style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 22)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: AppTheme.textPrimary),
-            onPressed: () {},
+                fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Folder name',
+            hintStyle: const TextStyle(color: AppTheme.textSecondary),
+            filled: true,
+            fillColor: AppTheme.background,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.edit_outlined, color: AppTheme.textPrimary),
-            onPressed: _showCreateMenu,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel',
+                style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
+            onPressed: () async {
+              final name = ctrl.text.trim();
+              if (name.isEmpty) return;
+              await _firestore.createFolder(name);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Create'),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // ── Filter chips ──────────────────────────────────────────────────
-          Container(
-            color: AppTheme.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: ['All', 'Unread', 'Groups', 'Study Sessions']
-                    .map((label) => Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
-                            onTap: () => setState(() => _activeFilter = label),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: _activeFilter == label
-                                    ? AppTheme.primary
-                                    : AppTheme.background,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                    color: _activeFilter == label
-                                        ? AppTheme.primary
-                                        : AppTheme.divider),
-                              ),
-                              child: Text(label,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: _activeFilter == label
-                                        ? Colors.white
-                                        : AppTheme.textSecondary,
-                                  )),
-                            ),
-                          ),
-                        ))
-                    .toList(),
-              ),
-            ),
-          ),
-          const Divider(height: 1, color: AppTheme.divider),
+    );
+  }
 
-          // ── Group list ────────────────────────────────────────────────────
-          Expanded(
-            child: StreamBuilder<List<StudyGroup>>(
-              stream: FirestoreService().myGroupsStream(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final groups = snapshot.data ?? [];
-                if (groups.isEmpty) {
-                  return _EmptyState(
-                    onCreateGroup: _openCreateGroup,
-                    onJoinByCode: _showJoinByCode,
-                    onBrowse: () =>
-                        Navigator.pushNamed(context, AppRoutes.discover),
-                  );
-                }
-                return ListView.separated(
-                  itemCount: groups.length,
-                  separatorBuilder: (_, _) => const Divider(
-                      height: 1, indent: 72, color: AppTheme.divider),
-                  itemBuilder: (context, index) {
-                    final group = groups[index];
-                    return Container(
-                      color: AppTheme.surface,
-                      child: GroupChatCard(
-                        group: group,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => ChatDetailScreen(group: group)),
-                        ),
-                      ),
-                    );
+  void _confirmDeleteFolder(ChatFolder folder) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Folder',
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+        content: Text(
+            'Delete "${folder.name}"? Groups inside won\'t be removed.',
+            style: const TextStyle(color: AppTheme.textSecondary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel',
+                style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
+            onPressed: () async {
+              await _firestore.deleteFolder(folder.id);
+              if (mounted) setState(() => _activeFolderId = null);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddToFolder(StudyGroup group, List<ChatFolder> folders) {
+    if (folders.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Create a folder first using the + chip.'),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'Create',
+            onPressed: _showCreateFolder,
+          ),
+        ),
+      );
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Add "${group.name}" to folder',
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary)),
+              const SizedBox(height: 12),
+              ...folders.map((folder) {
+                final inFolder = folder.groupIds.contains(group.id);
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: inFolder
+                          ? AppTheme.primary.withValues(alpha: 0.1)
+                          : const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      inFolder ? Icons.folder : Icons.folder_outlined,
+                      color: inFolder
+                          ? AppTheme.primary
+                          : AppTheme.textSecondary,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(folder.name,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: inFolder
+                              ? AppTheme.primary
+                              : AppTheme.textPrimary)),
+                  trailing: inFolder
+                      ? const Icon(Icons.check_circle,
+                          color: AppTheme.primary, size: 20)
+                      : null,
+                  onTap: () async {
+                    if (inFolder) {
+                      await _firestore.removeGroupFromFolder(
+                          folder.id, group.id);
+                    } else {
+                      await _firestore.addGroupToFolder(folder.id, group.id);
+                    }
+                    if (ctx.mounted) Navigator.pop(ctx);
                   },
                 );
-              },
-            ),
+              }),
+            ],
           ),
-        ],
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showCreateMenu,
-        backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<ChatFolder>>(
+      stream: _firestore.foldersStream(),
+      builder: (context, folderSnap) {
+        final folders = folderSnap.data ?? [];
+
+        return Scaffold(
+          backgroundColor: AppTheme.background,
+          appBar: AppBar(
+            backgroundColor: AppTheme.surface,
+            elevation: 0.5,
+            title: const Text('Chats',
+                style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22)),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.search, color: AppTheme.textPrimary),
+                onPressed: () {},
+              ),
+              IconButton(
+                icon:
+                    const Icon(Icons.edit_outlined, color: AppTheme.textPrimary),
+                onPressed: _showCreateMenu,
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              // ── Filter chips ────────────────────────────────────────────────
+              Container(
+                color: AppTheme.surface,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      // Fixed: All
+                      _FilterChip(
+                        label: 'All',
+                        active: _activeFolderId == null,
+                        onTap: () =>
+                            setState(() => _activeFolderId = null),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Dynamic folders
+                      ...folders.map((folder) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: GestureDetector(
+                              onLongPress: () =>
+                                  _confirmDeleteFolder(folder),
+                              child: _FilterChip(
+                                label: folder.name,
+                                icon: Icons.folder_outlined,
+                                active: _activeFolderId == folder.id,
+                                onTap: () => setState(
+                                    () => _activeFolderId = folder.id),
+                              ),
+                            ),
+                          )),
+
+                      // + New folder
+                      GestureDetector(
+                        onTap: _showCreateFolder,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.background,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: AppTheme.divider,
+                                style: BorderStyle.solid),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add,
+                                  size: 15, color: AppTheme.textSecondary),
+                              SizedBox(width: 4),
+                              Text('New Folder',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textSecondary,
+                                      fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Divider(height: 1, color: AppTheme.divider),
+
+              // ── Group list ──────────────────────────────────────────────────
+              Expanded(
+                child: StreamBuilder<List<StudyGroup>>(
+                  stream: _firestore.myGroupsStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final allGroups = snapshot.data ?? [];
+
+                    // Filter by active folder
+                    final activeFolder = _activeFolderId == null
+                        ? null
+                        : folders
+                            .where((f) => f.id == _activeFolderId)
+                            .firstOrNull;
+                    final groups = activeFolder == null
+                        ? allGroups
+                        : allGroups
+                            .where((g) =>
+                                activeFolder.groupIds.contains(g.id))
+                            .toList();
+
+                    if (allGroups.isEmpty) {
+                      return _EmptyState(
+                        onCreateGroup: _openCreateGroup,
+                        onJoinByCode: _showJoinByCode,
+                        onBrowse: () =>
+                            Navigator.pushNamed(context, AppRoutes.discover),
+                      );
+                    }
+
+                    if (groups.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.folder_open,
+                                size: 48,
+                                color: AppTheme.textSecondary),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No groups in "${activeFolder?.name}"',
+                              style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Long-press a group chat to add it here.',
+                              style: TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      itemCount: groups.length,
+                      separatorBuilder: (_, _) => const Divider(
+                          height: 1, indent: 72, color: AppTheme.divider),
+                      itemBuilder: (context, index) {
+                        final group = groups[index];
+                        return Container(
+                          color: AppTheme.surface,
+                          child: GroupChatCard(
+                            group: group,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      ChatDetailScreen(group: group)),
+                            ),
+                            onLongPress: () =>
+                                _showAddToFolder(group, folders),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _showCreateMenu,
+            backgroundColor: AppTheme.primary,
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  const _FilterChip({
+    required this.label,
+    required this.active,
+    required this.onTap,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: active ? AppTheme.primary : AppTheme.background,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: active ? AppTheme.primary : AppTheme.divider),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon,
+                  size: 13,
+                  color: active ? Colors.white : AppTheme.textSecondary),
+              const SizedBox(width: 4),
+            ],
+            Text(label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: active ? Colors.white : AppTheme.textSecondary,
+                )),
+          ],
+        ),
       ),
     );
   }
