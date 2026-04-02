@@ -218,6 +218,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       hintText: 'Tell others about yourself...',
                       hintStyle: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                       border: InputBorder.none,
+                      filled: false,
                       counterStyle: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
                     ),
                     style: const TextStyle(
@@ -445,19 +446,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildCard(List<Widget> children) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: Column(children: children),
       ),
-      child: Column(children: children),
     );
   }
 
@@ -477,6 +475,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           labelStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
           prefixIcon: Icon(icon, color: AppTheme.textSecondary, size: 20),
           border: InputBorder.none,
+          filled: false,
           errorStyle: const TextStyle(fontSize: 11),
         ),
         style: const TextStyle(fontSize: 15, color: AppTheme.textPrimary),

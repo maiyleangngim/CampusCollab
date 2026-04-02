@@ -189,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           Text(
-            'ID: $_id',
+            'ID: ${_id.replaceFirst('ID: ', '')}',
             style: const TextStyle(
               color: AppTheme.primary,
               fontWeight: FontWeight.bold,
