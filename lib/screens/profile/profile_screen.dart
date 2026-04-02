@@ -1,204 +1,425 @@
-// =============================================================================
-// PROFILE SCREEN
-// Owner: [assign to teammate]
-// TODO: Build the profile UI here
-// =============================================================================
-
 import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
+import '../../constants/app_routes.dart';
+import 'package:campuscollab/screens/profile/settings_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('CampusCollab Profile'),
-          actions: [
-            IconButton(icon: const Icon(Icons.settings_outlined), onPressed: () {}),
-          ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: "About"),
-              Tab(text: "Academic"),
-              Tab(text: "Collaboration"), // Replaces Progress
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            _buildBasicTab(context),
-            _buildAcademicTab(),
-            _buildCollabTab(), // Updated to focus on P2P
-          ],
-        ),
-      ),
-    );
-  }
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
-  // --- TAB 1: BASIC (Identity & Contact) ---
-  Widget _buildBasicTab(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-          _buildAvatar(context),
-          const SizedBox(height: 16),
-          const Text("John Doe", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const Text("@johndoe_24", style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 24),
-          _buildInfoTile(Icons.school_outlined, "University", "City Campus University"),
-          _buildInfoTile(Icons.email_outlined, "Student Email", "j.doe@campus.edu"),
-          _buildInfoTile(Icons.chat_bubble_outline, "Communication", "Prefers In-person & Discord"),
-          const SizedBox(height: 20),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              "\"Always down to study for CS midterms. I have great notes for Data Structures!\"",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontStyle: FontStyle.italic, color: Colors.blueGrey),
+class _ProfileScreenState extends State<ProfileScreen> {
+  final int _currentIndex = 4;
+
+  String _name = "Alex Thorne";
+  String _id = "ID: 2024020";
+  String _university = "AUPP";
+  String _location = "Phnom Penh";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        backgroundColor: AppTheme.surface,
+        elevation: 0.5,
+        title: Row(
+          children: [
+            Image.asset('assets/images/logo.png', width: 28),
+            const SizedBox(width: 8),
+            const Text('CampusCollab', style: AppTheme.titleStyle),
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                );
+              },
+              child: CircleAvatar(
+                radius: 18,
+                backgroundImage: NetworkImage(
+                    'https://ui-avatars.com/api/?name=$_name&background=1565C0&color=fff'),
+              ),
             ),
           ),
         ],
       ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            _buildProfileCard(),
+            const SizedBox(height: 24),
+            _buildGroupsSummaryCard(),
+            const SizedBox(height: 24),
+            _buildCurrentFocusSection(),
+            const SizedBox(height: 30),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
-  // --- TAB 2: ACADEMIC (Skills & Peer Mentoring) ---
-  Widget _buildAcademicTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+  Widget _buildProfileCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle("Study Level"),
-          const ListTile(
-            leading: Icon(Icons.workspace_premium, color: Colors.blue),
-            title: Text("Computer Science Major"),
-            subtitle: Text("3rd Year Undergraduate"),
-          ),
-          const Divider(),
-          _buildSectionTitle("I Can Help With:"), // Peer-to-peer focused
-          Wrap(
-            spacing: 8,
-            children: ["Java", "Mobile Dev", "Calculus I"]
-                .map((label) => Chip(
-                backgroundColor: Colors.blue[50],
-                label: Text(label, style: const TextStyle(color: Colors.blue))
-            )).toList(),
-          ),
-          const SizedBox(height: 20),
-          _buildSectionTitle("I'm Looking for Help In:"), // Collaboration focused
-          Wrap(
-            spacing: 8,
-            children: ["Discrete Math", "Machine Learning"]
-                .map((label) => Chip(
-                backgroundColor: Colors.orange[50],
-                label: Text(label, style: const TextStyle(color: Colors.orange))
-            )).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- TAB 3: COLLABORATION (Stats & Contribution) ---
-  Widget _buildCollabTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          // Profile Image with Edit Button
+          Stack(
+            clipBehavior: Clip.none,
             children: [
-              _buildStatCard("12", "Groups Joined", Icons.group, Colors.blue),
-              _buildStatCard("4.8", "Peer Rating", Icons.star, Colors.amber),
-              _buildStatCard("15", "Resourced Shared", Icons.file_present, Colors.green),
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  image: const DecorationImage(
+                    image: NetworkImage('https://i.pravatar.cc/300?img=12'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -10,
+                right: -10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    "EDIT",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 30),
-          _buildSectionTitle("Recent Collaboration Activity"),
-          _buildActivityItem("Shared 'Exam Prep PDF' in Python Group"),
-          _buildActivityItem("Joined 'Late Night Coffee Study' Session"),
-          _buildActivityItem("Voted 'Most Helpful' in Algorithms Chat"),
           const SizedBox(height: 24),
-          _buildSectionTitle("My Study Badges"),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.start,
+
+          // Name and Role Icon
+          Row(
             children: [
-              Tooltip(message: "Early Bird", child: Icon(Icons.wb_sunny, size: 45, color: Colors.orange)),
-              SizedBox(width: 15),
-              Tooltip(message: "Top Contributor", child: Icon(Icons.auto_awesome, size: 45, color: Colors.purple)),
-              SizedBox(width: 15),
-              Tooltip(message: "Verified Student", child: Icon(Icons.verified, size: 45, color: Colors.blue)),
+              Text(
+                _name,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.school, color: AppTheme.primary, size: 18),
+              ),
             ],
-          )
+          ),
+
+          Text(
+            _id,
+            style: const TextStyle(
+              color: AppTheme.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          _buildIconInfo(Icons.location_on_outlined, _university),
+          const SizedBox(height: 8),
+          _buildIconInfo(Icons.directions_walk, _location),
+
+          const SizedBox(height: 24),
+
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildTag("CS108B"),
+              _buildTag("MATH51"),
+              _buildTag("PWR1"),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  // --- REUSABLE COMPONENTS ---
-
-  Widget _buildAvatar(BuildContext context) {
-    return Stack(
+  Widget _buildIconInfo(IconData icon, String text) {
+    return Row(
       children: [
-        const CircleAvatar(
-          radius: 55,
-          backgroundColor: Colors.blue,
-          child: CircleAvatar(radius: 52, backgroundImage: NetworkImage('https://via.placeholder.com/150')),
-        ),
-        Positioned(
-          bottom: 0, right: 0,
-          child: CircleAvatar(
-            backgroundColor: Theme.of(context).primaryColor,
-            radius: 18,
-            child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+        Icon(icon, size: 18, color: AppTheme.textSecondary),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: const TextStyle(
+            color: AppTheme.textSecondary,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoTile(IconData icon, String label, String value) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.blueGrey),
-      title: Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      subtitle: Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+  Widget _buildTag(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: AppTheme.primary,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-    );
-  }
-
-  Widget _buildStatCard(String value, String label, IconData icon, Color color) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 32),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
-      ],
-    );
-  }
-
-  Widget _buildActivityItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+  Widget _buildGroupsSummaryCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.divider),
+      ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_outline, size: 18, color: Colors.green),
-          const SizedBox(width: 10),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE3F2FD),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.groups, color: AppTheme.primary),
+          ),
+          const SizedBox(width: 16),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "14 Groups",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              Text(
+                "ACTIVE MEMBERSHIPS",
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textSecondary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCurrentFocusSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.auto_awesome_motion, color: AppTheme.primary, size: 22),
+            SizedBox(width: 10),
+            Text(
+              "Current Focus",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildFocusCard(
+          "CS110",
+          "Systems Programming",
+          "Advanced memory management and concurrent process execution.",
+          [Colors.orange, Colors.blue, Colors.green],
+        ),
+        const SizedBox(height: 16),
+        _buildFocusCard(
+          "SIS400",
+          "Interaction Design",
+          "Human-centered design principles and high-fidelity prototyping.",
+          [Colors.purple, Colors.red],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFocusCard(String code, String title, String desc, List<Color> colors) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                code,
+                style: const TextStyle(
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+              const Icon(Icons.star, color: Color(0xFFD4AF37), size: 20),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            desc,
+            style: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Stacked Avatars
+          Row(
+            children: [
+              SizedBox(
+                width: 70,
+                height: 24,
+                child: Stack(
+                  children: List.generate(colors.length, (index) {
+                    return Positioned(
+                      left: index * 16.0,
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: AppTheme.surface,
+                        child: CircleAvatar(
+                          radius: 10,
+                          backgroundColor: colors[index],
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              if (colors.length > 2)
+                const Text(
+                  "+2",
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: (i) {
+        if (i == 0) Navigator.pushReplacementNamed(context, AppRoutes.home);
+        if (i == 1) Navigator.pushReplacementNamed(context, AppRoutes.discover);
+        if (i == 2) Navigator.pushReplacementNamed(context, AppRoutes.chats);
+        if (i == 3) Navigator.pushReplacementNamed(context, AppRoutes.calendar);
+      },
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: AppTheme.primary,
+      unselectedItemColor: AppTheme.textSecondary,
+      backgroundColor: AppTheme.surface,
+      elevation: 8,
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
+      items: const [
+        BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.explore_outlined),
+            activeIcon: Icon(Icons.explore),
+            label: 'Discover'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
+            label: 'Chat'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today_outlined),
+            activeIcon: Icon(Icons.calendar_today),
+            label: 'Calendar'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile'),
+      ],
     );
   }
 }
