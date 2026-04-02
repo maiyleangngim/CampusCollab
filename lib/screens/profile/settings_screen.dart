@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:campuscollab/theme/app_theme.dart';
 import 'package:campuscollab/constants/app_routes.dart';
 import 'package:campuscollab/providers/auth_provider.dart';
+import 'package:campuscollab/services/firestore_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,6 +18,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _emailDigests = false;
   bool _privateProfile = false;
   String _selectedTheme = "Light";
+
+  String _name = '';
+  String _major = '';
+  String? _avatarUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final data = await FirestoreService().getUser(uid);
+      if (!mounted || data == null) return;
+      setState(() {
+        _name = data['displayName'] ?? '';
+        _major = data['major'] ?? '';
+        _avatarUrl = data['avatarUrl'];
+      });
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,31 +142,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFFE3F2FD),
               borderRadius: BorderRadius.circular(16),
+              image: _avatarUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(_avatarUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: const Icon(Icons.person, color: AppTheme.primary, size: 36),
+            child: _avatarUrl == null
+                ? const Icon(Icons.person, color: AppTheme.primary, size: 36)
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Alex Thorne",
-                  style: TextStyle(
+                Text(
+                  _name.isEmpty ? 'Your Name' : _name,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
                   ),
                 ),
-                const Text(
-                  "Software Development",
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-                ),
+                if (_major.isNotEmpty)
+                  Text(
+                    _major,
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 13),
+                  ),
                 const SizedBox(height: 6),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: const Text(
-                    "Edit Profile",
+                    'Edit Profile',
                     style: TextStyle(
                       color: AppTheme.primary,
                       fontWeight: FontWeight.bold,
