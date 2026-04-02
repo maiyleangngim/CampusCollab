@@ -141,49 +141,68 @@ class _ChatsScreenState extends State<ChatsScreen> {
       context: context,
       backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: AppTheme.divider, borderRadius: BorderRadius.circular(2)),
-            ),
-            const SizedBox(height: 16),
-            _MenuItem(
-              icon: Icons.group_add_outlined,
-              label: 'Create New Group',
-              subtitle: 'Start a study group for your course',
-              onTap: () {
-                Navigator.pop(ctx);
-                _openCreateGroup();
-              },
-            ),
-            _MenuItem(
-              icon: Icons.vpn_key_outlined,
-              label: 'Join by Invite Code',
-              subtitle: 'Enter an 8-character code to join',
-              onTap: () {
-                Navigator.pop(ctx);
-                _showJoinByCode();
-              },
-            ),
-            _MenuItem(
-              icon: Icons.explore_outlined,
-              label: 'Browse Groups',
-              subtitle: 'Discover public groups to join',
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.pushNamed(context, AppRoutes.discover);
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: AppTheme.divider,
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(height: 20),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Add a Group',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary)),
+              ),
+              const SizedBox(height: 16),
+              _MenuItem(
+                icon: Icons.group_add_outlined,
+                iconBg: Color(0xFFE8F0FE),
+                iconColor: Color(0xFF1A73E8),
+                label: 'Create New Group',
+                subtitle: 'Start a study group for your course',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openCreateGroup();
+                },
+              ),
+              const SizedBox(height: 10),
+              _MenuItem(
+                icon: Icons.vpn_key_outlined,
+                iconBg: Color(0xFFFFF3E0),
+                iconColor: Color(0xFFF57C00),
+                label: 'Join by Invite Code',
+                subtitle: 'Enter an 8-character code to join',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showJoinByCode();
+                },
+              ),
+              const SizedBox(height: 10),
+              _MenuItem(
+                icon: Icons.explore_outlined,
+                iconBg: Color(0xFFE8F5E9),
+                iconColor: Color(0xFF2E7D32),
+                label: 'Browse Groups',
+                subtitle: 'Discover public groups to join',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.pushNamed(context, AppRoutes.discover);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -266,37 +285,11 @@ class _ChatsScreenState extends State<ChatsScreen> {
                 }
                 final groups = snapshot.data ?? [];
                 if (groups.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.chat_bubble_outline,
-                            size: 56,
-                            color: AppTheme.textSecondary.withValues(alpha: 0.3)),
-                        const SizedBox(height: 12),
-                        const Text('No chats yet',
-                            style: TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        const Text('Create or join a group to get started',
-                            style: TextStyle(
-                                color: AppTheme.textSecondary, fontSize: 13)),
-                        const SizedBox(height: 20),
-                        ElevatedButton.icon(
-                          onPressed: _showCreateMenu,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add a Group'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                      ],
-                    ),
+                  return _EmptyState(
+                    onCreateGroup: _openCreateGroup,
+                    onJoinByCode: _showJoinByCode,
+                    onBrowse: () =>
+                        Navigator.pushNamed(context, AppRoutes.discover),
                   );
                 }
                 return ListView.separated(
@@ -334,12 +327,16 @@ class _ChatsScreenState extends State<ChatsScreen> {
 
 class _MenuItem extends StatelessWidget {
   final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
   final String label;
   final String subtitle;
   final VoidCallback onTap;
 
   const _MenuItem({
     required this.icon,
+    required this.iconBg,
+    required this.iconColor,
     required this.label,
     required this.subtitle,
     required this.onTap,
@@ -347,25 +344,258 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFE3F2FD),
-          borderRadius: BorderRadius.circular(10),
+    return Material(
+      color: AppTheme.background,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary)),
+                    const SizedBox(height: 2),
+                    Text(subtitle,
+                        style: const TextStyle(
+                            color: AppTheme.textSecondary, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right,
+                  color: AppTheme.textSecondary, size: 18),
+            ],
+          ),
         ),
-        child: Icon(icon, color: AppTheme.primary, size: 22),
       ),
-      title: Text(label,
-          style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary)),
-      subtitle: Text(subtitle,
-          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-      trailing:
-          const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
-      onTap: onTap,
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final VoidCallback onCreateGroup;
+  final VoidCallback onJoinByCode;
+  final VoidCallback onBrowse;
+
+  const _EmptyState({
+    required this.onCreateGroup,
+    required this.onJoinByCode,
+    required this.onBrowse,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
+      child: Column(
+        children: [
+          // ── Illustration ───────────────────────────────────────────────
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.group_outlined,
+                size: 48, color: AppTheme.primary),
+          ),
+          const SizedBox(height: 20),
+          const Text('No study groups yet',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary)),
+          const SizedBox(height: 8),
+          const Text(
+            'Create a group, join one with an invite\ncode, or browse public groups.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: AppTheme.textSecondary, fontSize: 13, height: 1.5),
+          ),
+          const SizedBox(height: 32),
+
+          // ── Action cards ───────────────────────────────────────────────
+          _ActionCard(
+            icon: Icons.group_add_outlined,
+            iconBg: const Color(0xFFE8F0FE),
+            iconColor: const Color(0xFF1A73E8),
+            label: 'Create a New Group',
+            subtitle: 'Set up a study group for your course',
+            onTap: onCreateGroup,
+            isPrimary: true,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _SmallActionCard(
+                  icon: Icons.vpn_key_outlined,
+                  iconBg: const Color(0xFFFFF3E0),
+                  iconColor: const Color(0xFFF57C00),
+                  label: 'Join by Code',
+                  onTap: onJoinByCode,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _SmallActionCard(
+                  icon: Icons.explore_outlined,
+                  iconBg: const Color(0xFFE8F5E9),
+                  iconColor: const Color(0xFF2E7D32),
+                  label: 'Browse Groups',
+                  onTap: onBrowse,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool isPrimary;
+
+  const _ActionCard({
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+    this.isPrimary = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isPrimary ? AppTheme.primary : AppTheme.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: isPrimary
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : iconBg,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon,
+                    color: isPrimary ? Colors.white : iconColor, size: 26),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: isPrimary
+                                ? Colors.white
+                                : AppTheme.textPrimary)),
+                    const SizedBox(height: 3),
+                    Text(subtitle,
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: isPrimary
+                                ? Colors.white.withValues(alpha: 0.8)
+                                : AppTheme.textSecondary)),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios,
+                  size: 14,
+                  color:
+                      isPrimary ? Colors.white : AppTheme.textSecondary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SmallActionCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SmallActionCard({
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              const SizedBox(height: 10),
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
