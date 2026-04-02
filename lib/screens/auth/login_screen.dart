@@ -3,8 +3,10 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../constants/app_routes.dart';
 import '../../theme/app_theme.dart';
+import '../../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _passwordVisible = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -26,10 +29,23 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    final auth = context.read<AppAuthProvider>();
+    final success = await auth.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (!success && auth.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
+      );
+      auth.clearError();
     }
+    // AuthGate handles navigation on success automatically.
   }
 
   @override
@@ -141,12 +157,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _handleLogin,
-                    child: const Text(
-                      'Sign In',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
+                    onPressed: _isLoading ? null : _handleLogin,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Sign In',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 24),

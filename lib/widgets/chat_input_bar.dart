@@ -1,7 +1,39 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
-class ChatInputBar extends StatelessWidget {
-  const ChatInputBar({super.key});
+class ChatInputBar extends StatefulWidget {
+  final Future<void> Function(String text) onSend;
+  final Future<void> Function(File image)? onImagePick;
+
+  const ChatInputBar({
+    super.key,
+    required this.onSend,
+    this.onImagePick,
+  });
+
+  @override
+  State<ChatInputBar> createState() => _ChatInputBarState();
+}
+
+class _ChatInputBarState extends State<ChatInputBar> {
+  final _controller = TextEditingController();
+  bool _isSending = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSend() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _isSending) return;
+    setState(() => _isSending = true);
+    _controller.clear();
+    await widget.onSend(text);
+    if (mounted) setState(() => _isSending = false);
+  }
 
   void _showAttachmentMenu(BuildContext context) {
     showModalBottomSheet(
@@ -36,7 +68,17 @@ class ChatInputBar extends StatelessWidget {
                     icon: Icons.image_outlined,
                     label: 'Image',
                     color: Colors.blue[700]!,
-                    onTap: () => Navigator.pop(context),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      if (widget.onImagePick == null) return;
+                      final picked = await ImagePicker().pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 80,
+                      );
+                      if (picked != null) {
+                        await widget.onImagePick!(File(picked.path));
+                      }
+                    },
                   ),
                   _AttachmentItem(
                     icon: Icons.insert_drive_file_outlined,
@@ -79,11 +121,13 @@ class ChatInputBar extends StatelessWidget {
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: const TextField(
-                  decoration: InputDecoration.collapsed(
+                child: TextField(
+                  controller: _controller,
+                  onSubmitted: (_) => _handleSend(),
+                  decoration: const InputDecoration.collapsed(
                     hintText: 'Type a message...',
                   ),
-                  style: TextStyle(fontSize: 15),
+                  style: const TextStyle(fontSize: 15),
                 ),
               ),
             ),
@@ -93,10 +137,19 @@ class ChatInputBar extends StatelessWidget {
                 color: Colors.blue[700],
                 shape: BoxShape.circle,
               ),
-              child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white, size: 20),
-                onPressed: () {},
-              ),
+              child: _isSending
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                      onPressed: _handleSend,
+                    ),
             ),
           ],
         ),

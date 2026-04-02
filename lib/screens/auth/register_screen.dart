@@ -3,8 +3,9 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
-import '../../constants/app_routes.dart';
+import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
+import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -21,6 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -42,10 +44,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
-  void _handleRegister() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+  Future<void> _handleRegister() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    final auth = context.read<AppAuthProvider>();
+    final success = await auth.register(
+      _nameController.text.trim(),
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (!success && auth.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
+      );
+      auth.clearError();
     }
+    // AuthGate handles navigation on success automatically.
   }
 
   @override
@@ -196,12 +212,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _handleRegister,
-                    child: const Text(
-                      'Create Account',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
+                    onPressed: _isLoading ? null : _handleRegister,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Create Account',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 24),
