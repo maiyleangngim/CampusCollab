@@ -48,6 +48,48 @@ class _LoginScreenState extends State<LoginScreen> {
     // AuthGate handles navigation on success automatically.
   }
 
+  Future<void> _handleGoogle() async {
+    setState(() => _isLoading = true);
+    final auth = context.read<AppAuthProvider>();
+    final success = await auth.loginWithGoogle();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (!success && auth.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
+      );
+      auth.clearError();
+    }
+  }
+
+  Future<void> _handleMicrosoft() async {
+    setState(() => _isLoading = true);
+    final auth = context.read<AppAuthProvider>();
+    final success = await auth.loginWithMicrosoft();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (!success && auth.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
+      );
+      auth.clearError();
+    }
+  }
+
+  Future<void> _handleDebugLogin() async {
+    setState(() => _isLoading = true);
+    final auth = context.read<AppAuthProvider>();
+    final success = await auth.loginAnonymously();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (!success && auth.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
+      );
+      auth.clearError();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,6 +218,55 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
+                // ── Divider ────────────────────────────────────────────────
+                const Row(
+                  children: [
+                    Expanded(child: Divider(color: AppTheme.divider)),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'or continue with',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: AppTheme.divider)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // ── Social Buttons ─────────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: _SocialButton(
+                        label: 'Google',
+                        icon: Icons.g_mobiledata_rounded,
+                        iconColor: const Color(0xFFEA4335),
+                        onTap: _isLoading ? null : _handleGoogle,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _SocialButton(
+                        label: 'Microsoft',
+                        icon: Icons.window_rounded,
+                        iconColor: const Color(0xFF00A4EF),
+                        onTap: _isLoading ? null : _handleMicrosoft,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // ── Debug Button ───────────────────────────────────────────
+                _DebugLoginButton(
+                  onTap: _isLoading ? null : _handleDebugLogin,
+                ),
+                const SizedBox(height: 24),
+
                 // ── Register link ──────────────────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -207,6 +298,91 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+// ── Social Sign-In Button ──────────────────────────────────────────────────────
+
+class _SocialButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color iconColor;
+  final VoidCallback? onTap;
+
+  const _SocialButton({
+    required this.label,
+    required this.icon,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: iconColor, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Debug Login Button ─────────────────────────────────────────────────────────
+
+class _DebugLoginButton extends StatelessWidget {
+  final VoidCallback? onTap;
+  const _DebugLoginButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF8E1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFFD54F)),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bug_report_outlined, color: Color(0xFFF57F17), size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Debug: Skip Login',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFF57F17),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Field Label ────────────────────────────────────────────────────────────────
 
 class _FieldLabel extends StatelessWidget {
   final String text;

@@ -53,6 +53,63 @@ class AppAuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> loginWithGoogle() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _auth.signInWithGoogle();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _error = _friendlyError(e.code);
+      return false;
+    } catch (e) {
+      final msg = e.toString();
+      if (!msg.contains('cancelled')) {
+        _error = 'Google sign-in failed. Please try again.';
+      }
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> loginWithMicrosoft() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _auth.signInWithMicrosoft();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _error = _friendlyError(e.code);
+      return false;
+    } catch (e) {
+      _error = 'Microsoft sign-in failed. Please try again.';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> loginAnonymously() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _auth.signInAnonymously();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _error = _friendlyError(e.code);
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> logout() => _auth.logout();
 
   void clearError() {

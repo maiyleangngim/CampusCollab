@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:campuscollab/theme/app_theme.dart';
 import 'package:campuscollab/constants/app_routes.dart';
+import 'package:campuscollab/providers/auth_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -339,8 +341,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             fontSize: 15,
           ),
         ),
-        onTap: () {
-          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
+        onTap: () async {
+          await context.read<AppAuthProvider>().logout();
+          // AuthGate will automatically navigate to LoginScreen.
         },
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -32,6 +33,54 @@ class AuthService {
       'createdAt': FieldValue.serverTimestamp(),
     });
     return cred;
+  }
+
+  /// Sign in with Google.
+  Future<UserCredential> signInWithGoogle() async {
+    final googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) throw Exception('cancelled');
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    final cred = await _auth.signInWithCredential(credential);
+    await _ensureUserDoc(cred);
+    return cred;
+  }
+
+  /// Sign in with Microsoft via OAuth.
+  Future<UserCredential> signInWithMicrosoft() async {
+    final provider = OAuthProvider('microsoft.com');
+    provider.addScope('email');
+    provider.addScope('profile');
+    final cred = await _auth.signInWithProvider(provider);
+    await _ensureUserDoc(cred);
+    return cred;
+  }
+
+  /// Sign in anonymously (debug / guest).
+  Future<UserCredential> signInAnonymously() async {
+    final cred = await _auth.signInAnonymously();
+    await _ensureUserDoc(cred, displayName: 'Guest');
+    return cred;
+  }
+
+  /// Creates a Firestore user doc if one doesn't exist yet.
+  Future<void> _ensureUserDoc(UserCredential cred, {String? displayName}) async {
+    final user = cred.user!;
+    final doc = await _db.collection('users').doc(user.uid).get();
+    if (!doc.exists) {
+      await _db.collection('users').doc(user.uid).set({
+        'displayName': displayName ?? user.displayName ?? 'User',
+        'email': user.email ?? '',
+        'major': '',
+        'subjects': [],
+        'avatarUrl': user.photoURL,
+        'isLookingForGroup': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   /// Sign out.

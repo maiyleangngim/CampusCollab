@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/app_theme.dart';
 import '../../constants/app_routes.dart';
+import '../../services/firestore_service.dart';
 import 'package:campuscollab/screens/profile/settings_screen.dart';
 import 'package:campuscollab/screens/profile/edit_profile_screen.dart';
 
@@ -14,14 +16,46 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final int _currentIndex = 4;
 
-  String _name = "Alex Thorne";
-  String _id = "2024020";
-  String _university = "AUPP";
-  String _location = "Phnom Penh";
-  String _major = "Software Development";
+  String _name = "";
+  String _id = "";
+  String _university = "";
+  String _location = "";
+  String _major = "";
   String _bio = "";
-  List<String> _courses = ["CS108B", "MATH51", "PWR1"];
+  List<String> _courses = [];
   bool _isLookingForGroup = false;
+  String? _avatarUrl;
+  bool _loadingProfile = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      setState(() => _loadingProfile = false);
+      return;
+    }
+    final data = await FirestoreService().getUser(uid);
+    if (!mounted) return;
+    setState(() {
+      _loadingProfile = false;
+      if (data != null) {
+        _name = data['displayName'] ?? '';
+        _id = data['studentId'] ?? '';
+        _university = data['university'] ?? '';
+        _location = data['location'] ?? '';
+        _major = data['major'] ?? '';
+        _bio = data['bio'] ?? '';
+        _courses = List<String>.from(data['subjects'] ?? []);
+        _isLookingForGroup = data['isLookingForGroup'] ?? false;
+        _avatarUrl = data['avatarUrl'];
+      }
+    });
+  }
 
   void _openEditProfile() async {
     final result = await Navigator.push<ProfileData>(
@@ -37,6 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             bio: _bio,
             courses: _courses,
             isLookingForGroup: _isLookingForGroup,
+            avatarUrl: _avatarUrl,
           ),
         ),
       ),
@@ -51,6 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _bio = result.bio;
         _courses = result.courses;
         _isLookingForGroup = result.isLookingForGroup;
+        _avatarUrl = result.avatarUrl;
       });
     }
   }
@@ -81,27 +117,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
               child: CircleAvatar(
                 radius: 18,
-                backgroundImage: NetworkImage(
-                    'https://ui-avatars.com/api/?name=$_name&background=1565C0&color=fff'),
+                backgroundColor: const Color(0xFFE3F2FD),
+                backgroundImage: _avatarUrl != null
+                    ? NetworkImage(_avatarUrl!)
+                    : (_name.isNotEmpty
+                        ? NetworkImage(
+                            'https://ui-avatars.com/api/?name=$_name&background=1565C0&color=fff')
+                        : null),
+                child: _avatarUrl == null && _name.isEmpty
+                    ? const Icon(Icons.person, color: AppTheme.primary, size: 20)
+                    : null,
               ),
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            _buildProfileCard(),
-            const SizedBox(height: 24),
-            _buildGroupsSummaryCard(),
-            const SizedBox(height: 24),
-            _buildCurrentFocusSection(),
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
+      body: _loadingProfile
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  _buildProfileCard(),
+                  const SizedBox(height: 24),
+                  _buildGroupsSummaryCard(),
+                  const SizedBox(height: 24),
+                  _buildCurrentFocusSection(),
+                  const SizedBox(height: 30),
+                ],
+              ),
+            ),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
@@ -133,11 +179,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 height: 120,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  image: const DecorationImage(
-                    image: NetworkImage('https://i.pravatar.cc/300?img=12'),
-                    fit: BoxFit.cover,
-                  ),
+                  color: const Color(0xFFE3F2FD),
+                  image: _avatarUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(_avatarUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
+                child: _avatarUrl == null
+                    ? const Icon(Icons.person, size: 56, color: AppTheme.primary)
+                    : null,
               ),
               Positioned(
                 bottom: -10,
@@ -169,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Text(
-                _name,
+                _name.isEmpty ? 'Your Name' : _name,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -188,21 +240,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
 
-          Text(
-            'ID: ${_id.replaceFirst('ID: ', '')}',
-            style: const TextStyle(
-              color: AppTheme.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
+          if (_id.isNotEmpty)
+            Text(
+              'ID: ${_id.replaceFirst('ID: ', '')}',
+              style: const TextStyle(
+                color: AppTheme.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
-          ),
           const SizedBox(height: 16),
 
-          _buildIconInfo(Icons.location_on_outlined, _university),
-          const SizedBox(height: 8),
-          _buildIconInfo(Icons.menu_book_outlined, _major),
-          const SizedBox(height: 8),
-          _buildIconInfo(Icons.directions_walk, _location),
+          if (_university.isNotEmpty) _buildIconInfo(Icons.location_on_outlined, _university),
+          if (_university.isNotEmpty) const SizedBox(height: 8),
+          if (_major.isNotEmpty) _buildIconInfo(Icons.menu_book_outlined, _major),
+          if (_major.isNotEmpty) const SizedBox(height: 8),
+          if (_location.isNotEmpty) _buildIconInfo(Icons.directions_walk, _location),
 
           if (_bio.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -421,7 +474,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Stacked Avatars
           Row(
             children: [
               SizedBox(

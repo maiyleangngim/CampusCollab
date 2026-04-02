@@ -4,8 +4,8 @@
 
 import 'package:flutter/material.dart';
 import '../../constants/app_routes.dart';
-import '../../data/dummy_data.dart';
 import '../../models/discover_group.dart';
+import '../../services/firestore_service.dart';
 import '../../theme/app_theme.dart';
 
 const List<String> _filterLabels = [
@@ -32,6 +32,18 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   String _activeFilter = 'All Groups';
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  List<DiscoverGroup> _allGroups = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    FirestoreService().getDiscoverGroups().then((groups) {
+      if (mounted) setState(() { _allGroups = groups; _loading = false; });
+    }).catchError((_) {
+      if (mounted) setState(() => _loading = false);
+    });
+  }
 
   @override
   void dispose() {
@@ -40,8 +52,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   List<DiscoverGroup> get _filtered {
-    return dummyDiscoverGroups.where((g) {
-      final matchesFilter = g.filterTags.contains(_activeFilter);
+    return _allGroups.where((g) {
+      final matchesFilter = _activeFilter == 'All Groups' || g.filterTags.contains(_activeFilter);
       final q = _searchQuery.toLowerCase();
       final matchesSearch = q.isEmpty ||
           g.name.toLowerCase().contains(q) ||
@@ -156,7 +168,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
           // ── Group Cards ───────────────────────────────────────────────────
           Expanded(
-            child: _filtered.isEmpty
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _filtered.isEmpty
                 ? const Center(
                     child: Text('No groups found.',
                         style: TextStyle(color: AppTheme.textSecondary)))

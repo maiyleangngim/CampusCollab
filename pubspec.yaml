@@ -45,6 +45,9 @@ dependencies:
   # Image picking
   image_picker: ^1.1.2
 
+  # Social sign-in
+  google_sign_in: ^6.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

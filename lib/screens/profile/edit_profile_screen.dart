@@ -1,5 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/app_theme.dart';
+import '../../services/firestore_service.dart';
+import '../../services/storage_service.dart';
 
 /// Data class passed to and returned from EditProfileScreen.
 class ProfileData {
@@ -73,6 +77,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late List<String> _courses;
   late bool _isLookingForGroup;
 
+  File? _pickedImage;
+  bool _isSaving = false;
+
   @override
   void initState() {
     super.initState();
@@ -111,19 +118,65 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _courses.remove(course));
   }
 
-  void _saveProfile() {
-    if (!_formKey.currentState!.validate()) return;
-    final updated = widget.initial.copyWith(
-      name: _nameCtrl.text.trim(),
-      studentId: _idCtrl.text.trim(),
-      university: _universityCtrl.text.trim(),
-      location: _locationCtrl.text.trim(),
-      major: _majorCtrl.text.trim(),
-      bio: _bioCtrl.text.trim(),
-      courses: List.from(_courses),
-      isLookingForGroup: _isLookingForGroup,
+  Future<void> _pickImage() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
     );
-    Navigator.pop(context, updated);
+    if (picked != null) {
+      setState(() => _pickedImage = File(picked.path));
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSaving = true);
+
+    try {
+      // Upload new avatar if one was picked
+      String? newAvatarUrl = widget.initial.avatarUrl;
+      if (_pickedImage != null) {
+        newAvatarUrl = await StorageService().uploadProfilePicture(_pickedImage!);
+      }
+
+      final updated = widget.initial.copyWith(
+        name: _nameCtrl.text.trim(),
+        studentId: _idCtrl.text.trim(),
+        university: _universityCtrl.text.trim(),
+        location: _locationCtrl.text.trim(),
+        major: _majorCtrl.text.trim(),
+        bio: _bioCtrl.text.trim(),
+        courses: List.from(_courses),
+        isLookingForGroup: _isLookingForGroup,
+        avatarUrl: newAvatarUrl,
+      );
+
+      // Persist to Firestore
+      await FirestoreService().updateUserProfile({
+        'displayName': updated.name,
+        'studentId': updated.studentId,
+        'university': updated.university,
+        'location': updated.location,
+        'major': updated.major,
+        'bio': updated.bio,
+        'subjects': updated.courses,
+        'isLookingForGroup': updated.isLookingForGroup,
+        if (newAvatarUrl != null) 'avatarUrl': newAvatarUrl,
+      });
+
+      if (!mounted) return;
+      Navigator.pop(context, updated);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -142,15 +195,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: TextButton(
-              onPressed: _saveProfile,
-              child: const Text(
-                'Save',
-                style: TextStyle(
-                  color: AppTheme.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
+              onPressed: _isSaving ? null : _saveProfile,
+              child: _isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.primary,
+                      ),
+                    )
+                  : const Text(
+                      'Save',
+                      style: TextStyle(
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -239,18 +301,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Tag chips
                       if (_courses.isNotEmpty) ...[
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: _courses
-                              .map((c) => _buildCourseChip(c))
-                              .toList(),
+                          children: _courses.map((c) => _buildCourseChip(c)).toList(),
                         ),
                         const SizedBox(height: 16),
                       ],
-                      // Add course input
                       Row(
                         children: [
                           Expanded(
@@ -329,7 +387,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _saveProfile,
+                  onPressed: _isSaving ? null : _saveProfile,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
@@ -339,10 +397,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Save Changes',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Save Changes',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -356,6 +423,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   // ── AVATAR SECTION ──────────────────────────────────────────────────────────
 
   Widget _buildAvatarSection() {
+    ImageProvider? imageProvider;
+    if (_pickedImage != null) {
+      imageProvider = FileImage(_pickedImage!);
+    } else if (widget.initial.avatarUrl != null) {
+      imageProvider = NetworkImage(widget.initial.avatarUrl!);
+    }
+
     return Center(
       child: Column(
         children: [
@@ -367,14 +441,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
                   color: const Color(0xFFE3F2FD),
-                  image: widget.initial.avatarUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(widget.initial.avatarUrl!),
-                          fit: BoxFit.cover,
-                        )
+                  image: imageProvider != null
+                      ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
                       : null,
                 ),
-                child: widget.initial.avatarUrl == null
+                child: imageProvider == null
                     ? const Icon(Icons.person, size: 56, color: AppTheme.primary)
                     : null,
               ),
@@ -382,15 +453,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 bottom: 0,
                 right: 0,
                 child: GestureDetector(
-                  onTap: () {
-                    // TODO: wire up image_picker + Firebase Storage
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Photo upload will be available after Firebase setup'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
+                  onTap: _pickImage,
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -406,14 +469,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           const SizedBox(height: 12),
           GestureDetector(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Photo upload will be available after Firebase setup'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
+            onTap: _pickImage,
             child: const Text(
               'Change Profile Photo',
               style: TextStyle(
