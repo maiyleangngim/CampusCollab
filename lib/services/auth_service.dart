@@ -49,16 +49,6 @@ class AuthService {
     return cred;
   }
 
-  /// Sign in with Microsoft via OAuth.
-  Future<UserCredential> signInWithMicrosoft() async {
-    final provider = OAuthProvider('microsoft.com');
-    provider.addScope('email');
-    provider.addScope('profile');
-    final cred = await _auth.signInWithProvider(provider);
-    await _ensureUserDoc(cred);
-    return cred;
-  }
-
   /// Sign in anonymously (debug / guest).
   Future<UserCredential> signInAnonymously() async {
     final cred = await _auth.signInAnonymously();

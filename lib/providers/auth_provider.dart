@@ -75,25 +75,6 @@ class AppAuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> loginWithMicrosoft() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-    try {
-      await _auth.signInWithMicrosoft();
-      return true;
-    } on FirebaseAuthException catch (e) {
-      _error = _friendlyError(e.code);
-      return false;
-    } catch (e) {
-      _error = 'Microsoft sign-in failed. Please try again.';
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
   Future<bool> loginAnonymously() async {
     _isLoading = true;
     _error = null;

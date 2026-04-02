@@ -62,20 +62,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _handleMicrosoft() async {
-    setState(() => _isLoading = true);
-    final auth = context.read<AppAuthProvider>();
-    final success = await auth.loginWithMicrosoft();
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    if (!success && auth.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
-      );
-      auth.clearError();
-    }
-  }
-
   Future<void> _handleDebugLogin() async {
     setState(() => _isLoading = true);
     final auth = context.read<AppAuthProvider>();
@@ -238,26 +224,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
 
                 // ── Social Buttons ─────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SocialButton(
-                        label: 'Google',
-                        icon: Icons.g_mobiledata_rounded,
-                        iconColor: const Color(0xFFEA4335),
-                        onTap: _isLoading ? null : _handleGoogle,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SocialButton(
-                        label: 'Microsoft',
-                        icon: Icons.window_rounded,
-                        iconColor: const Color(0xFF00A4EF),
-                        onTap: _isLoading ? null : _handleMicrosoft,
-                      ),
-                    ),
-                  ],
+                _SocialButton(
+                  label: 'Continue with Google',
+                  icon: Icons.g_mobiledata_rounded,
+                  iconColor: const Color(0xFFEA4335),
+                  onTap: _isLoading ? null : _handleGoogle,
                 ),
                 const SizedBox(height: 16),
 
