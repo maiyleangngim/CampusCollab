@@ -1,12 +1,14 @@
 // =============================================================================
 // LOGIN SCREEN
-// Owner: [assign to teammate]
-// TODO: Build the login UI here
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../constants/app_routes.dart';
 import '../../theme/app_theme.dart';
+import '../../providers/auth_provider.dart';
+import 'auth_widgets.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,198 +19,317 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  bool _isPasswordVisible = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _passwordVisible = false;
+  bool _isLoading = false;
 
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Password is required';
-    if (value.length < 8) return 'Must be at least 8 characters';
-
-    final passwordRegex = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$');
-    if (!passwordRegex.hasMatch(value)) {
-      return 'Include letters, numbers, and a sign (e.g., !@#)';
-    }
-    return null;
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
-  void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+  Future<void> _navigateAfter(bool success) {
+    if (success) {
+      return Navigator.of(context)
+          .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+    }
+    return Future.value();
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    final auth = context.read<AppAuthProvider>();
+    final success = await auth.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (success) {
+      _navigateAfter(true);
+    } else if (auth.error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(auth.error!)));
+      auth.clearError();
+    }
+  }
+
+  Future<void> _handleGoogle() async {
+    setState(() => _isLoading = true);
+    final auth = context.read<AppAuthProvider>();
+    final success = await auth.loginWithGoogle();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (success) {
+      _navigateAfter(true);
+    } else if (auth.error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(auth.error!)));
+      auth.clearError();
+    }
+  }
+
+  Future<void> _handleDebugLogin() async {
+    setState(() => _isLoading = true);
+    final auth = context.read<AppAuthProvider>();
+    final success = await auth.loginAnonymously();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (success) {
+      _navigateAfter(true);
+    } else if (auth.error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(auth.error!)));
+      auth.clearError();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-        // --- ADDED BRANDING TO THE TOP RIGHT ---
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Row(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spacingLg, vertical: AppTheme.spacingXl),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Replace Icons.school with Image.asset('assets/logo.png') once you have one
-                Image.asset('assets/images/mobile.png', width: 30,),
-                const SizedBox(width: 6),
-                const Text(
-                  "CampusCollab",
+                // ── Logo ──────────────────────────────────────────────────────
+                const AuthLogoHeader(),
+                const SizedBox(height: AppTheme.spacingXl + 8),
+
+                // ── Heading ───────────────────────────────────────────────────
+                Text('Welcome back', style: AppTheme.headingStyle),
+                const SizedBox(height: 6),
+                Text(
+                  'Sign in to continue collaborating.',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
+                      fontSize: 15,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5),
                 ),
+                const SizedBox(height: AppTheme.spacingXl),
+
+                // ── Email ─────────────────────────────────────────────────────
+                const AuthFieldLabel('Email Address'),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autocorrect: false,
+                  decoration: const InputDecoration(
+                    hintText: 'you@campus.edu',
+                    prefixIcon: Icon(Icons.email_outlined,
+                        color: AppTheme.textTertiary),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Enter your email';
+                    if (!v.contains('@')) return 'Enter a valid email';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppTheme.spacingMd),
+
+                // ── Password ──────────────────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const AuthFieldLabel('Password'),
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ForgotPasswordScreen()),
+                      ),
+                      child: Text(
+                        'Forgot password?',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.primaryLight,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: !_passwordVisible,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _isLoading ? null : _handleLogin(),
+                  decoration: InputDecoration(
+                    hintText: '••••••••',
+                    prefixIcon: Icon(Icons.lock_outline,
+                        color: AppTheme.textTertiary),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _passwordVisible
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: AppTheme.textTertiary,
+                        size: 20,
+                      ),
+                      onPressed: () =>
+                          setState(() => _passwordVisible = !_passwordVisible),
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Enter your password';
+                    if (v.length < 8) return 'Must be at least 8 characters';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppTheme.spacingXl),
+
+                // ── Sign In Button ────────────────────────────────────────────
+                AuthPrimaryButton(
+                  label: 'Sign In',
+                  isLoading: _isLoading,
+                  onPressed: _handleLogin,
+                ),
+                const SizedBox(height: AppTheme.spacingLg),
+
+                // ── Divider ───────────────────────────────────────────────────
+                const AuthOrDivider(),
+                const SizedBox(height: AppTheme.spacingLg),
+
+                // ── Social buttons ────────────────────────────────────────────
+                _SocialButton(
+                  label: 'Continue with Google',
+                  icon: Icons.g_mobiledata_rounded,
+                  iconColor: const Color(0xFFEA4335),
+                  onTap: _isLoading ? null : _handleGoogle,
+                ),
+                const SizedBox(height: AppTheme.spacingMd),
+                _DebugLoginButton(
+                    onTap: _isLoading ? null : _handleDebugLogin),
+                const SizedBox(height: AppTheme.spacingLg),
+
+                // ── Register link ─────────────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Don't have an account? ",
+                      style: TextStyle(
+                          fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                    GestureDetector(
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.register),
+                      child: Text(
+                        'Create one',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.primaryLight,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppTheme.spacingMd),
               ],
             ),
-          ),
-        ],
-        // ---------------------------------------
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                "Welcome!",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text("Please enter your details to continue."),
-              const SizedBox(height: 32),
-
-              // FULL NAME FIELD
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  prefixIcon: Icon(Icons.person_outline),
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) => value!.isEmpty ? 'Enter your name' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // EMAIL FIELD
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email Address',
-                  prefixIcon: Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || !value.contains('@')) return 'Enter a valid email';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // PASSWORD FIELD
-              TextFormField(
-                controller: _passwordController,
-                obscureText: !_isPasswordVisible,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
-                  ),
-                  border: const OutlineInputBorder(),
-                  helperText: 'Min. 8 chars, numbers & symbols',
-                ),
-                validator: _validatePassword,
-              ),
-              const SizedBox(height: 32),
-
-              // LOGIN BUTTON
-              ElevatedButton(
-                onPressed: _handleLogin,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('Login / Sign Up', style: TextStyle(fontSize: 16)),
-              ),
-            ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w800,
-        color: Color(0xFF5D5D5D),
-        letterSpacing: 1.0,
-      ),
-    );
-  }
+// ── Login-specific widgets ─────────────────────────────────────────────────────
 
-  InputDecoration _buildInputDecoration({required String hintText, required IconData prefixIcon, Widget? suffixIcon}) {
-    return InputDecoration(
-      hintText: hintText,
-      hintStyle: TextStyle(color: Colors.grey[400]),
-      prefixIcon: Icon(prefixIcon, color: Colors.grey[400]),
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: const Color(0xFFF0F2F8),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-    );
-  }
+class _SocialButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color iconColor;
+  final VoidCallback? onTap;
 
-  Widget _buildSocialButton(String label, IconData icon) {
-    return OutlinedButton(
-      onPressed: () {},
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(color: Colors.grey[100]!),
-        backgroundColor: const Color(0xFFF8F9FE),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.black87),
-          const SizedBox(width: 8),
-          Text(label, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
+  const _SocialButton({
+    required this.label,
+    required this.icon,
+    required this.iconColor,
+    required this.onTap,
+  });
 
-  Widget _buildFooterLink(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.bold,
-        color: Colors.grey[500],
-        letterSpacing: 0.5,
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: Border.all(color: AppTheme.border, width: 1.5),
+          boxShadow: AppTheme.shadowXs,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildFooterSeparator() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Text("|", style: TextStyle(color: Colors.grey[300], fontSize: 10)),
     );
   }
 }
+
+class _DebugLoginButton extends StatelessWidget {
+  final VoidCallback? onTap;
+  const _DebugLoginButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 46,
+        decoration: BoxDecoration(
+          color: AppTheme.warningLight,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: Border.all(
+              color: AppTheme.warning.withValues(alpha: 0.4), width: 1),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bug_report_outlined, color: AppTheme.warning, size: 18),
+            SizedBox(width: 8),
+            Text(
+              'Debug: Skip Login',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.warning,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+
+

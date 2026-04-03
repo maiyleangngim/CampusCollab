@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../models/study_group.dart';
 import '../models/discover_group.dart';

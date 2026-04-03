@@ -4,13 +4,20 @@ import '../models/study_group.dart';
 class GroupChatCard extends StatelessWidget {
   final StudyGroup group;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
-  const GroupChatCard({super.key, required this.group, required this.onTap});
+  const GroupChatCard({
+    super.key,
+    required this.group,
+    required this.onTap,
+    this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
@@ -60,6 +67,7 @@ class GroupChatCard extends StatelessWidget {
                       Text(
                         group.lastMessageTime,
                         style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),

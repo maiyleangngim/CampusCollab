@@ -1,7 +1,39 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
-class ChatInputBar extends StatelessWidget {
-  const ChatInputBar({super.key});
+class ChatInputBar extends StatefulWidget {
+  final Future<void> Function(String text) onSend;
+  final Future<void> Function(File image)? onImagePick;
+
+  const ChatInputBar({
+    super.key,
+    required this.onSend,
+    this.onImagePick,
+  });
+
+  @override
+  State<ChatInputBar> createState() => _ChatInputBarState();
+}
+
+class _ChatInputBarState extends State<ChatInputBar> {
+  final _controller = TextEditingController();
+  bool _isSending = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSend() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _isSending) return;
+    setState(() => _isSending = true);
+    _controller.clear();
+    await widget.onSend(text);
+    if (mounted) setState(() => _isSending = false);
+  }
 
   void _showAttachmentMenu(BuildContext context) {
     showModalBottomSheet(
@@ -36,7 +68,17 @@ class ChatInputBar extends StatelessWidget {
                     icon: Icons.image_outlined,
                     label: 'Image',
                     color: Colors.blue[700]!,
-                    onTap: () => Navigator.pop(context),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      if (widget.onImagePick == null) return;
+                      final picked = await ImagePicker().pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 80,
+                      );
+                      if (picked != null) {
+                        await widget.onImagePick!(File(picked.path));
+                      }
+                    },
                   ),
                   _AttachmentItem(
                     icon: Icons.insert_drive_file_outlined,
@@ -62,28 +104,41 @@ class ChatInputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      color: Colors.white,
+      color: colorScheme.surface,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: SafeArea(
         child: Row(
           children: [
             IconButton(
-              icon: Icon(Icons.add_circle_outline, color: Colors.grey[600], size: 28),
+              icon: Icon(
+                Icons.add_circle_outline,
+                color: colorScheme.onSurfaceVariant,
+                size: 28,
+              ),
               onPressed: () => _showAttachmentMenu(context),
             ),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
-                child: const TextField(
+                child: TextField(
+                  controller: _controller,
+                  onSubmitted: (_) => _handleSend(),
                   decoration: InputDecoration.collapsed(
                     hintText: 'Type a message...',
+                    hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                   ),
-                  style: TextStyle(fontSize: 15),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ),
             ),
@@ -93,10 +148,19 @@ class ChatInputBar extends StatelessWidget {
                 color: Colors.blue[700],
                 shape: BoxShape.circle,
               ),
-              child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white, size: 20),
-                onPressed: () {},
-              ),
+              child: _isSending
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                      onPressed: _handleSend,
+                    ),
             ),
           ],
         ),
