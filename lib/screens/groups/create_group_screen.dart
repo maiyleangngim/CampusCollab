@@ -69,15 +69,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppTheme.textPrimary),
+          icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Create Study Group', style: AppTheme.titleStyle),
+        title: Text('Create Study Group', style: AppTheme.titleStyle),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -89,7 +89,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
                     )
-                  : const Text('Create',
+                  : Text('Create',
                       style: TextStyle(
                           color: AppTheme.primary,
                           fontWeight: FontWeight.bold,
@@ -175,9 +175,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                               textCapitalization: TextCapitalization.characters,
                               decoration: InputDecoration(
                                 hintText: 'Add tag (e.g. ALGORITHMS)',
-                                hintStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                                hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                                 filled: true,
-                                fillColor: AppTheme.background,
+                                fillColor: Theme.of(context).scaffoldBackgroundColor,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide: BorderSide.none,
@@ -196,7 +196,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                                 color: AppTheme.primary,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.add, color: Colors.white, size: 20),
+                              child: Icon(Icons.add, color: Colors.white, size: 20),
                             ),
                           ),
                         ],
@@ -217,7 +217,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       // Max members
                       Row(
                         children: [
-                          const Icon(Icons.people_outlined, color: AppTheme.textSecondary, size: 20),
+                          Icon(Icons.people_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -225,10 +225,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                               children: [
                                 Text(
                                   'Max Members: ${_maxMembers.round()}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
-                                      color: AppTheme.textPrimary),
+                                      color: Theme.of(context).colorScheme.onSurface),
                                 ),
                                 Slider(
                                   value: _maxMembers,
@@ -251,16 +251,16 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         onChanged: (v) => setState(() => _isPublic = v),
                         activeThumbColor: AppTheme.primary,
                         activeTrackColor: AppTheme.accent,
-                        title: const Text(
+                        title: Text(
                           'Public Group',
                           style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
-                              color: AppTheme.textPrimary),
+                              color: Theme.of(context).colorScheme.onSurface),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Anyone can find and join this group',
-                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                         ),
                       ),
                     ],
@@ -287,7 +287,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           height: 22,
                           child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                         )
-                      : const Text('Create Group',
+                      : Text('Create Group',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
@@ -303,10 +303,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(label,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w800,
-              color: AppTheme.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               letterSpacing: 1.2)),
     );
   }
@@ -314,7 +314,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   Widget _card(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.divider),
       ),
@@ -337,12 +337,12 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-          prefixIcon: Icon(icon, color: AppTheme.textSecondary, size: 20),
+          labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
+          prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
           border: InputBorder.none,
           filled: false,
         ),
-        style: const TextStyle(fontSize: 15, color: AppTheme.textPrimary),
+        style: TextStyle(fontSize: 15, color: Theme.of(context).colorScheme.onSurface),
       ),
     );
   }
@@ -366,14 +366,14 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           ),
           child: Column(
             children: [
-              Icon(icon, color: isSelected ? color : AppTheme.textSecondary, size: 28),
+              Icon(icon, color: isSelected ? color : Theme.of(context).colorScheme.onSurfaceVariant, size: 28),
               const SizedBox(height: 8),
               Text(label,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: isSelected ? color : AppTheme.textSecondary)),
+                      color: isSelected ? color : Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
         ),
@@ -385,24 +385,28 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFE3F2FD),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(tag,
-              style: const TextStyle(
+              style: TextStyle(
                   color: AppTheme.primary,
                   fontSize: 12,
                   fontWeight: FontWeight.bold)),
           const SizedBox(width: 5),
           GestureDetector(
             onTap: () => setState(() => _tags.remove(tag)),
-            child: const Icon(Icons.close, size: 13, color: AppTheme.primary),
+            child: Icon(Icons.close, size: 13, color: AppTheme.primary),
           ),
         ],
       ),
     );
   }
 }
+
+
+
+

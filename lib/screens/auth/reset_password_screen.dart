@@ -6,7 +6,6 @@
 
 import 'package:flutter/material.dart';
 import '../../constants/app_routes.dart';
-import '../../theme/app_theme.dart';
 
 class ResetPasswordScreen extends StatelessWidget {
   final String email;
@@ -24,7 +23,7 @@ class ResetPasswordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -40,18 +39,18 @@ class ResetPasswordScreen extends StatelessWidget {
                   color: const Color(0xFFE8F5E9),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_circle_outline_rounded,
+                child: Icon(Icons.check_circle_outline_rounded,
                     color: Color(0xFF43A047), size: 48),
               ),
               const SizedBox(height: 32),
 
               // ── Heading ──────────────────────────────────────────────────────
-              const Text(
+              Text(
                 'Identity verified!',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -59,20 +58,20 @@ class ResetPasswordScreen extends StatelessWidget {
 
               Text(
                 'A password reset link has been sent to\n${_maskEmail(email)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppTheme.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.6,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
 
-              const Text(
+              Text(
                 'Click the link in that email to set your new password.',
                 style: TextStyle(
                   fontSize: 13,
-                  color: AppTheme.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -86,7 +85,7 @@ class ResetPasswordScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context)
                       .pushNamedAndRemoveUntil(AppRoutes.login, (r) => false),
-                  child: const Text(
+                  child: Text(
                     'Back to Sign In',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
@@ -99,3 +98,7 @@ class ResetPasswordScreen extends StatelessWidget {
     );
   }
 }
+
+
+
+

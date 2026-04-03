@@ -26,7 +26,7 @@ class _ResourceVaultScreenState extends State<ResourceVaultScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -39,15 +39,15 @@ class _ResourceVaultScreenState extends State<ResourceVaultScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Add Link Resource',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+            Text('Add Link Resource',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 16),
             TextField(
               controller: titleCtrl,
               decoration: InputDecoration(
                 labelText: 'Title',
                 filled: true,
-                fillColor: AppTheme.background,
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
               ),
             ),
@@ -58,7 +58,7 @@ class _ResourceVaultScreenState extends State<ResourceVaultScreen> {
               decoration: InputDecoration(
                 labelText: 'URL (https://...)',
                 filled: true,
-                fillColor: AppTheme.background,
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
               ),
             ),
@@ -79,7 +79,7 @@ class _ResourceVaultScreenState extends State<ResourceVaultScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text('Add Resource'),
+                child: Text('Add Resource'),
               ),
             ),
           ],
@@ -92,22 +92,22 @@ class _ResourceVaultScreenState extends State<ResourceVaultScreen> {
   Widget build(BuildContext context) {
     final myUid = FirebaseAuth.instance.currentUser?.uid ?? '';
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
         leading: const BackButton(color: AppTheme.primary),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Resource Vault', style: AppTheme.titleStyle),
+            Text('Resource Vault', style: AppTheme.titleStyle),
             Text(widget.groupName,
-                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_link, color: AppTheme.primary),
+            icon: Icon(Icons.add_link, color: AppTheme.primary),
             onPressed: _showAddLink,
           ),
         ],
@@ -124,11 +124,11 @@ class _ResourceVaultScreenState extends State<ResourceVaultScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.folder_open_outlined, size: 56, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
+                  Icon(Icons.folder_open_outlined, size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
                   const SizedBox(height: 12),
-                  const Text('No resources yet', style: TextStyle(color: AppTheme.textSecondary, fontSize: 15)),
+                  Text('No resources yet', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 15)),
                   const SizedBox(height: 4),
-                  const Text('Tap + to add a link', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  Text('Tap + to add a link', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
                 ],
               ),
             );
@@ -151,7 +151,7 @@ class _ResourceVaultScreenState extends State<ResourceVaultScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddLink,
         backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -182,7 +182,7 @@ class _ResourceTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
         ),
@@ -191,10 +191,10 @@ class _ResourceTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFE3F2FD),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.link, color: AppTheme.primary, size: 22),
+              child: Icon(Icons.link, color: AppTheme.primary, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -202,29 +202,33 @@ class _ResourceTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(resource.title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 14, color: AppTheme.textPrimary)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 3),
                   Text(resource.url,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.primary, fontSize: 12)),
+                      style: TextStyle(color: AppTheme.primary, fontSize: 12)),
                   const SizedBox(height: 3),
                   Text('by ${resource.uploadedByName}',
-                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11)),
                 ],
               ),
             ),
             if (canDelete)
               IconButton(
-                icon: const Icon(Icons.delete_outline, color: AppTheme.textSecondary, size: 20),
+                icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
                 onPressed: onDelete,
               )
             else
-              const Icon(Icons.open_in_new, color: AppTheme.textSecondary, size: 18),
+              Icon(Icons.open_in_new, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 18),
           ],
         ),
       ),
     );
   }
 }
+
+
+
+

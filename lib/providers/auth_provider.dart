@@ -75,7 +75,23 @@ class AppAuthProvider extends ChangeNotifier {
       await _auth.register(name, email, password);
       return true;
     } on FirebaseAuthException catch (e) {
-      _error = _friendlyError(e.code);
+      if (e.code == 'wrong-password') {
+        _error =
+            'This email is already registered. Use the original password to continue verification, or reset your password.';
+      } else {
+        _error = _friendlyError(e.code);
+      }
+      return false;
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.contains('Email template recipient is not configured')) {
+        _error =
+            'Email verification is not configured yet. Please ask the admin to finish EmailJS template setup.';
+      } else if (msg.contains('recipient address is empty')) {
+        _error = 'Verification email failed because recipient email is missing.';
+      } else {
+        _error = 'Could not complete sign-up right now. Please try again.';
+      }
       return false;
     } finally {
       _isLoading = false;

@@ -8,7 +8,7 @@ enum OtpPurpose { emailVerification, passwordReset }
 class OtpService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  static const _expireMinutes = 10;
+  static const _expireMinutes = 15;
 
   // ── Generate & store ────────────────────────────────────────────────────────
 
@@ -37,6 +37,9 @@ class OtpService {
   /// - emailVerification → sets emailVerified: true on the user doc
   /// - passwordReset    → sets passwordResetVerified: true on the user doc
   Future<bool> verify(String uid, String code, OtpPurpose purpose) async {
+    final normalizedCode = code.trim().replaceAll(RegExp(r'\D'), '');
+    if (normalizedCode.length != 6) return false;
+
     final doc = await _db.collection('users').doc(uid).get();
     final otp = doc.data()?['otp'] as Map<String, dynamic>?;
     if (otp == null) return false;
@@ -50,7 +53,7 @@ class OtpService {
     }
     if (storedPurpose != purpose.name) return false;
     if (DateTime.now().isAfter(expiresAt.toDate())) return false;
-    if (storedHash != _hash(code)) return false;
+    if (storedHash != _hash(normalizedCode)) return false;
 
     // Clear the OTP and mark the relevant flag
     final updates = <String, dynamic>{'otp': FieldValue.delete()};

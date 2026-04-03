@@ -27,7 +27,7 @@ class AuthLogoHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'CampusCollab',
             style: TextStyle(
               fontSize: 20,
@@ -50,7 +50,7 @@ class AuthFieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: AppTheme.labelStyle.copyWith(color: AppTheme.textPrimary),
+      style: AppTheme.labelStyle.copyWith(color: Theme.of(context).colorScheme.onSurface),
     );
   }
 }
@@ -81,7 +81,7 @@ class AuthPrimaryButton extends StatelessWidget {
                     strokeWidth: 2.5, color: Colors.white),
               )
             : Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 15, fontWeight: FontWeight.w600)),
       ),
     );
@@ -112,3 +112,7 @@ class AuthOrDivider extends StatelessWidget {
     );
   }
 }
+
+
+
+

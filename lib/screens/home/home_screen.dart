@@ -46,20 +46,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final firstName = displayName.split(' ').first;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
             // ── App Bar ─────────────────────────────────────────────────────
             SliverAppBar(
               floating: true,
-              backgroundColor: AppTheme.surface,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               elevation: 0.5,
               title: Row(
                 children: [
                   Image.asset('assets/images/logo.png', width: 28),
                   const SizedBox(width: 8),
-                  const Text('CampusCollab', style: AppTheme.titleStyle),
+                  Text('CampusCollab', style: AppTheme.titleStyle),
                 ],
               ),
               actions: [
@@ -75,10 +75,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.bolt, color: Color(0xFFF59E0B), size: 16),
+                      Icon(Icons.bolt, color: Color(0xFFF59E0B), size: 16),
                       const SizedBox(width: 3),
                       Text('$_karma',
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: Color(0xFFF59E0B),
                               fontWeight: FontWeight.bold,
                               fontSize: 13)),
@@ -86,8 +86,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.notifications_outlined,
-                      color: AppTheme.textPrimary),
+                  icon: Icon(Icons.notifications_outlined,
+                      color: Theme.of(context).colorScheme.onSurface),
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRoutes.calendar),
                 ),
@@ -174,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openCreateGroup,
         backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: Colors.white),
       ),
 
       bottomNavigationBar: BottomNavigationBar(
@@ -187,10 +187,10 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppTheme.primary,
-        unselectedItemColor: AppTheme.textSecondary,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
         showSelectedLabels: true,
         showUnselectedLabels: true,
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 8,
         items: const [
           BottomNavigationBarItem(
@@ -239,7 +239,7 @@ class _HeroCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -260,18 +260,18 @@ class _HeroCard extends StatelessWidget {
                   children: [
                     Text(
                       'Hey, $firstName! 👋',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Ready to collaborate today?',
                       style: TextStyle(
                           fontSize: 13,
-                          color: AppTheme.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           height: 1.4),
                     ),
                   ],
@@ -284,8 +284,8 @@ class _HeroCard extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: onCreateGroup,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Create a Study Group'),
+              icon: Icon(Icons.add, size: 18),
+              label: Text('Create a Study Group'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
@@ -300,8 +300,8 @@ class _HeroCard extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: onViewSchedule,
-              icon: const Icon(Icons.calendar_today_outlined, size: 18),
-              label: const Text('View Schedule'),
+              icon: Icon(Icons.calendar_today_outlined, size: 18),
+              label: Text('View Schedule'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.primary,
                 side: const BorderSide(color: AppTheme.primary),
@@ -344,22 +344,22 @@ class _SectionHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                   )),
               const SizedBox(height: 2),
               Text(subtitle,
-                  style: const TextStyle(
-                      fontSize: 12, color: AppTheme.textSecondary)),
+                  style: TextStyle(
+                      fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
         ),
         GestureDetector(
           onTap: onAction,
           child: Text(actionLabel,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 color: AppTheme.primaryLight,
                 fontWeight: FontWeight.w600,
@@ -385,7 +385,7 @@ class _EmptyGroupsCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppTheme.divider, style: BorderStyle.solid),
         ),
@@ -393,12 +393,12 @@ class _EmptyGroupsCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.group_add_outlined,
-                size: 32, color: AppTheme.textSecondary.withValues(alpha: 0.5)),
+                size: 32, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
             const SizedBox(height: 8),
-            const Text('No active groups yet',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+            Text('No active groups yet',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
             const SizedBox(height: 4),
-            const Text('Tap to create your first group',
+            Text('Tap to create your first group',
                 style: TextStyle(
                     color: AppTheme.primary,
                     fontSize: 12,
@@ -435,7 +435,7 @@ class _ActiveGroupCard extends StatelessWidget {
       width: 155,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -469,7 +469,7 @@ class _ActiveGroupCard extends StatelessWidget {
                     color: AppTheme.onlineGreen,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text('LIVE',
+                  child: Text('LIVE',
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 9,
@@ -489,10 +489,10 @@ class _ActiveGroupCard extends StatelessWidget {
           ],
           Text(
             group.name,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -500,12 +500,12 @@ class _ActiveGroupCard extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(Icons.people_outline,
-                  size: 12, color: AppTheme.textSecondary),
+              Icon(Icons.people_outline,
+                  size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
               Text('${group.memberCount}',
-                  style: const TextStyle(
-                      fontSize: 11, color: AppTheme.textSecondary)),
+                  style: TextStyle(
+                      fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
         ],
@@ -571,7 +571,7 @@ class _QuickCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -594,17 +594,21 @@ class _QuickCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(title,
-                style: const TextStyle(
+                style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
-                    color: AppTheme.textPrimary)),
+                    color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 2),
             Text(subtitle,
-                style: const TextStyle(
-                    fontSize: 11, color: AppTheme.textSecondary)),
+                style: TextStyle(
+                    fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
         ),
       ),
     );
   }
 }
+
+
+
+

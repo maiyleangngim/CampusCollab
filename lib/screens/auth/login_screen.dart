@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
@@ -106,13 +106,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: AppTheme.spacingXl + 8),
 
                 // ── Heading ───────────────────────────────────────────────────
-                const Text('Welcome back', style: AppTheme.headingStyle),
+                Text('Welcome back', style: AppTheme.headingStyle),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Sign in to continue collaborating.',
                   style: TextStyle(
                       fontSize: 15,
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.5),
                 ),
                 const SizedBox(height: AppTheme.spacingXl),
@@ -149,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         MaterialPageRoute(
                             builder: (_) => const ForgotPasswordScreen()),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Forgot password?',
                         style: TextStyle(
                           fontSize: 13,
@@ -168,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onFieldSubmitted: (_) => _isLoading ? null : _handleLogin(),
                   decoration: InputDecoration(
                     hintText: '••••••••',
-                    prefixIcon: const Icon(Icons.lock_outline,
+                    prefixIcon: Icon(Icons.lock_outline,
                         color: AppTheme.textTertiary),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -218,15 +218,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "Don't have an account? ",
                       style: TextStyle(
-                          fontSize: 14, color: AppTheme.textSecondary),
+                          fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                     GestureDetector(
                       onTap: () =>
                           Navigator.pushNamed(context, AppRoutes.register),
-                      child: const Text(
+                      child: Text(
                         'Create one',
                         style: TextStyle(
                           fontSize: 14,
@@ -269,7 +269,7 @@ class _SocialButton extends StatelessWidget {
       child: Container(
         height: 50,
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           border: Border.all(color: AppTheme.border, width: 1.5),
           boxShadow: AppTheme.shadowXs,
@@ -281,10 +281,10 @@ class _SocialButton extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
@@ -329,3 +329,7 @@ class _DebugLoginButton extends StatelessWidget {
     );
   }
 }
+
+
+
+

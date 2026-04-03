@@ -70,12 +70,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
@@ -96,16 +96,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 children: [
                   Text(
                     widget.group.name,
-                    style: const TextStyle(
-                        color: AppTheme.textPrimary,
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 15),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     '${widget.group.memberCount} members',
-                    style: const TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 12),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                   ),
                 ],
               ),
@@ -114,7 +114,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline, color: AppTheme.primary),
+            icon: Icon(Icons.info_outline, color: AppTheme.primary),
             onPressed: () => Navigator.pushNamed(
               context,
               AppRoutes.groupDetail,
@@ -127,7 +127,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         children: [
           // ── Quick Action Bar ──────────────────────────────────────────────
           Container(
-            color: AppTheme.surface,
+            color: Theme.of(context).colorScheme.surface,
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -193,15 +193,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       children: [
                         Icon(Icons.chat_bubble_outline,
                             size: 48,
-                            color: AppTheme.textSecondary.withValues(alpha: 0.3)),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
                         const SizedBox(height: 12),
-                        const Text('No messages yet',
+                        Text('No messages yet',
                             style: TextStyle(
-                                color: AppTheme.textSecondary, fontSize: 15)),
+                                color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 15)),
                         const SizedBox(height: 4),
-                        const Text('Say hello to your group!',
+                        Text('Say hello to your group!',
                             style: TextStyle(
-                                color: AppTheme.textSecondary, fontSize: 13)),
+                                color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
                       ],
                     ),
                   );
@@ -258,12 +258,16 @@ class _ActionButton extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 11,
-                  color: AppTheme.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 }
+
+
+
+

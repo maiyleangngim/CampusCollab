@@ -104,30 +104,41 @@ class _ChatInputBarState extends State<ChatInputBar> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      color: Colors.white,
+      color: colorScheme.surface,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: SafeArea(
         child: Row(
           children: [
             IconButton(
-              icon: Icon(Icons.add_circle_outline, color: Colors.grey[600], size: 28),
+              icon: Icon(
+                Icons.add_circle_outline,
+                color: colorScheme.onSurfaceVariant,
+                size: 28,
+              ),
               onPressed: () => _showAttachmentMenu(context),
             ),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
                 child: TextField(
                   controller: _controller,
                   onSubmitted: (_) => _handleSend(),
-                  decoration: const InputDecoration.collapsed(
+                  decoration: InputDecoration.collapsed(
                     hintText: 'Type a message...',
+                    hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                   ),
-                  style: const TextStyle(fontSize: 15),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ),
             ),

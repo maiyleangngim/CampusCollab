@@ -84,7 +84,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
@@ -99,13 +99,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: AppTheme.spacingXl + 8),
 
                 // ── Heading ───────────────────────────────────────────────────
-                const Text('Create an account', style: AppTheme.headingStyle),
+                Text('Create an account', style: AppTheme.headingStyle),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Fill in your details to get started.',
                   style: TextStyle(
                       fontSize: 15,
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.5),
                 ),
                 const SizedBox(height: AppTheme.spacingXl),
@@ -159,7 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     hintText: '••••••••',
                     helperText: 'Min. 8 chars, letters, numbers & symbols',
                     helperStyle: AppTheme.captionStyle,
-                    prefixIcon: const Icon(Icons.lock_outline,
+                    prefixIcon: Icon(Icons.lock_outline,
                         color: AppTheme.textTertiary),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -188,7 +188,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       _isLoading ? null : _handleRegister(),
                   decoration: InputDecoration(
                     hintText: '••••••••',
-                    prefixIcon: const Icon(Icons.lock_outline,
+                    prefixIcon: Icon(Icons.lock_outline,
                         color: AppTheme.textTertiary),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -223,14 +223,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'Already have an account? ',
                       style: TextStyle(
-                          fontSize: 14, color: AppTheme.textSecondary),
+                          fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Text(
+                      child: Text(
                         'Sign in',
                         style: TextStyle(
                           fontSize: 14,
@@ -250,3 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
+
+
+
+

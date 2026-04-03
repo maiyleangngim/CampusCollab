@@ -66,6 +66,9 @@ dependencies:
   # Google Fonts — Nunito
   google_fonts: ^6.2.1
 
+  # Local persistence for theme mode
+  shared_preferences: ^2.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -21,26 +21,64 @@ class AuthService {
 
   /// Register new user and create their Firestore profile doc.
   Future<UserCredential> register(String name, String email, String password) async {
-    final cred = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    await _db.collection('users').doc(cred.user!.uid).set({
-      'displayName': name,
-      'email': email,
-      'major': '',
-      'subjects': [],
-      'avatarUrl': null,
-      'isLookingForGroup': false,
-      'emailVerified': false,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    // Generate a 6-digit OTP and send it via email instead of Firebase's link
-    final code = await OtpService()
-        .generateAndStore(cred.user!.uid, OtpPurpose.emailVerification);
-    await EmailService()
-        .sendVerificationCode(toEmail: email, name: name, code: code);
-    return cred;
+    final normalizedEmail = email.trim().toLowerCase();
+    UserCredential cred;
+
+    try {
+      cred = await _auth.createUserWithEmailAndPassword(
+        email: normalizedEmail,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      // If the account already exists, allow the user to continue only when
+      // that existing account is still unverified.
+      if (e.code != 'email-already-in-use') rethrow;
+
+      final existingCred = await _auth.signInWithEmailAndPassword(
+        email: normalizedEmail,
+        password: password,
+      );
+
+      final userDoc = await _db.collection('users').doc(existingCred.user!.uid).get();
+      final isVerifiedInFirestore = userDoc.data()?['emailVerified'] == true;
+      if (isVerifiedInFirestore) {
+        throw FirebaseAuthException(code: 'email-already-in-use');
+      }
+
+      final existingName =
+          (userDoc.data()?['displayName'] as String?)?.trim() ?? '';
+      final nameForEmail = existingName.isNotEmpty ? existingName : name;
+      final code = await OtpService()
+          .generateAndStore(existingCred.user!.uid, OtpPurpose.emailVerification);
+      await EmailService()
+          .sendVerificationCode(toEmail: normalizedEmail, name: nameForEmail, code: code);
+      return existingCred;
+    }
+
+    try {
+      await _db.collection('users').doc(cred.user!.uid).set({
+        'displayName': name,
+        'email': normalizedEmail,
+        'major': '',
+        'subjects': [],
+        'avatarUrl': null,
+        'isLookingForGroup': false,
+        'emailVerified': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      // Generate a 6-digit OTP and send it via email instead of Firebase's link
+      final code = await OtpService()
+          .generateAndStore(cred.user!.uid, OtpPurpose.emailVerification);
+      await EmailService()
+          .sendVerificationCode(toEmail: normalizedEmail, name: name, code: code);
+      return cred;
+    } catch (_) {
+      // Roll back partially-created auth/profile state if OTP delivery fails.
+      await _db.collection('users').doc(cred.user!.uid).delete().catchError((_) {});
+      await cred.user?.delete().catchError((_) {});
+      await _auth.signOut().catchError((_) {});
+      rethrow;
+    }
   }
 
   /// Sign in with Google.

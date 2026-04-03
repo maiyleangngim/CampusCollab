@@ -182,15 +182,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppTheme.textPrimary),
+          icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Edit Profile', style: AppTheme.titleStyle),
+        title: Text('Edit Profile', style: AppTheme.titleStyle),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -205,7 +205,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         color: AppTheme.primary,
                       ),
                     )
-                  : const Text(
+                  : Text(
                       'Save',
                       style: TextStyle(
                         color: AppTheme.primary,
@@ -276,16 +276,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     controller: _bioCtrl,
                     maxLines: 4,
                     maxLength: 200,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Tell others about yourself...',
-                      hintStyle: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                      hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
                       border: InputBorder.none,
                       filled: false,
-                      counterStyle: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
+                      counterStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11),
                     ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppTheme.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                       height: 1.5,
                     ),
                   ),
@@ -317,12 +317,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               textCapitalization: TextCapitalization.characters,
                               decoration: InputDecoration(
                                 hintText: 'Add course (e.g. CS110)',
-                                hintStyle: const TextStyle(
-                                  color: AppTheme.textSecondary,
+                                hintStyle: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   fontSize: 14,
                                 ),
                                 filled: true,
-                                fillColor: AppTheme.background,
+                                fillColor: Theme.of(context).scaffoldBackgroundColor,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide: BorderSide.none,
@@ -344,7 +344,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 color: AppTheme.primary,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.add, color: Colors.white, size: 20),
+                              child: Icon(Icons.add, color: Colors.white, size: 20),
                             ),
                           ),
                         ],
@@ -366,17 +366,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     onChanged: (val) => setState(() => _isLookingForGroup = val),
                     activeThumbColor: AppTheme.primary,
                     activeTrackColor: AppTheme.accent,
-                    title: const Text(
+                    title: Text(
                       'Looking for a Group',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
-                        color: AppTheme.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    subtitle: const Text(
+                    subtitle: Text(
                       'Let others know you\'re available to join a study group',
-                      style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                     ),
                   ),
                 ),
@@ -406,7 +406,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Save Changes',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
@@ -440,13 +440,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 height: 110,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
-                  color: const Color(0xFFE3F2FD),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                   image: imageProvider != null
                       ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
                       : null,
                 ),
                 child: imageProvider == null
-                    ? const Icon(Icons.person, size: 56, color: AppTheme.primary)
+                    ? Icon(Icons.person, size: 56, color: AppTheme.primary)
                     : null,
               ),
               Positioned(
@@ -459,9 +459,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     decoration: BoxDecoration(
                       color: AppTheme.primary,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.surface, width: 2),
+                      border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
                     ),
-                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                    child: Icon(Icons.camera_alt, color: Colors.white, size: 18),
                   ),
                 ),
               ),
@@ -470,7 +470,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           const SizedBox(height: 12),
           GestureDetector(
             onTap: _pickImage,
-            child: const Text(
+            child: Text(
               'Change Profile Photo',
               style: TextStyle(
                 color: AppTheme.primary,
@@ -491,10 +491,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: AppTheme.textSecondary,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           letterSpacing: 1.2,
         ),
       ),
@@ -506,7 +506,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppTheme.divider),
         ),
@@ -528,13 +528,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         validator: validator,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-          prefixIcon: Icon(icon, color: AppTheme.textSecondary, size: 20),
+          labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
+          prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
           border: InputBorder.none,
           filled: false,
-          errorStyle: const TextStyle(fontSize: 11),
+          errorStyle: TextStyle(fontSize: 11),
         ),
-        style: const TextStyle(fontSize: 15, color: AppTheme.textPrimary),
+        style: TextStyle(fontSize: 15, color: Theme.of(context).colorScheme.onSurface),
       ),
     );
   }
@@ -547,7 +547,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE3F2FD),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -555,7 +555,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         children: [
           Text(
             course,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppTheme.primary,
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -564,10 +564,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           const SizedBox(width: 6),
           GestureDetector(
             onTap: () => _removeCourse(course),
-            child: const Icon(Icons.close, size: 14, color: AppTheme.primary),
+            child: Icon(Icons.close, size: 14, color: AppTheme.primary),
           ),
         ],
       ),
     );
   }
 }
+
+
+
+

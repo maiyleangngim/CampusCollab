@@ -40,16 +40,16 @@ class _CalendarScreenState extends State<CalendarScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
         leading: const BackButton(color: AppTheme.primary),
         title: Row(
           children: [
             Image.asset('assets/images/logo.png', width: 26),
             const SizedBox(width: 8),
-            const Text('CampusCollab', style: AppTheme.titleStyle),
+            Text('CampusCollab', style: AppTheme.titleStyle),
           ],
         ),
         actions: [
@@ -58,14 +58,14 @@ class _CalendarScreenState extends State<CalendarScreen>
             child: CircleAvatar(
               radius: 18,
               backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
-              child: const Icon(Icons.person, color: AppTheme.primary, size: 20),
+              child: Icon(Icons.person, color: AppTheme.primary, size: 20),
             ),
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppTheme.primary,
-          unselectedLabelColor: AppTheme.textSecondary,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
           indicatorColor: AppTheme.primary,
           indicatorWeight: 3,
           tabs: const [
@@ -101,17 +101,17 @@ class _NotificationsTab extends StatelessWidget {
         children: [
           Icon(Icons.notifications_none,
               size: 56,
-              color: AppTheme.textSecondary.withValues(alpha: 0.3)),
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
-          const Text('No notifications yet',
+          Text('No notifications yet',
               style: TextStyle(
-                color: AppTheme.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               )),
           const SizedBox(height: 6),
-          const Text('Study session reminders will appear here',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+          Text('Study session reminders will appear here',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
         ],
       ),
     );
@@ -148,7 +148,7 @@ class _CalendarTabState extends State<_CalendarTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -191,7 +191,7 @@ class _CalendarTabState extends State<_CalendarTab> {
                 // ── Calendar Card ─────────────────────────────────────────
                 Container(
                   decoration: BoxDecoration(
-                    color: AppTheme.surface,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -228,10 +228,10 @@ class _CalendarTabState extends State<_CalendarTab> {
                 if (selectedSessions.isNotEmpty) ...[
                   Text(
                     _formatDate(_selectedDay!),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -240,11 +240,11 @@ class _CalendarTabState extends State<_CalendarTab> {
                 ],
 
                 // ── Upcoming Sessions ─────────────────────────────────────
-                const Text('Upcoming Sessions',
+                Text('Upcoming Sessions',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                     )),
                 const SizedBox(height: 12),
 
@@ -254,15 +254,15 @@ class _CalendarTabState extends State<_CalendarTab> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         'No upcoming sessions.\nSchedule one with the + button!',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 13),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                       ),
                     ),
                   )
@@ -278,7 +278,7 @@ class _CalendarTabState extends State<_CalendarTab> {
               child: FloatingActionButton(
                 onPressed: () => _showAddSession(context),
                 backgroundColor: AppTheme.primary,
-                child: const Icon(Icons.add, color: Colors.white),
+                child: Icon(Icons.add, color: Colors.white),
               ),
             ),
           ],
@@ -419,11 +419,11 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Schedule Session',
+          Text('Schedule Session',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary)),
+                  color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 16),
 
           // Title
@@ -431,9 +431,9 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
             controller: _titleCtrl,
             decoration: InputDecoration(
               hintText: 'Session title',
-              hintStyle: const TextStyle(color: AppTheme.textSecondary),
+              hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               filled: true,
-              fillColor: AppTheme.background,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -451,22 +451,22 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.background,
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<StudyGroup>(
                     value: _selectedGroup,
                     isExpanded: true,
-                    hint: const Text('Select a group',
-                        style: TextStyle(color: AppTheme.textSecondary)),
+                    hint: Text('Select a group',
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     items: groups
                         .map((g) => DropdownMenuItem(
                               value: g,
                               child: Text(g.name,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      color: AppTheme.textPrimary, fontSize: 14)),
+                                  style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
                             ))
                         .toList(),
                     onChanged: (g) => setState(() => _selectedGroup = g),
@@ -502,11 +502,11 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
             controller: _locationCtrl,
             decoration: InputDecoration(
               hintText: 'Location (optional)',
-              hintStyle: const TextStyle(color: AppTheme.textSecondary),
-              prefixIcon: const Icon(Icons.location_on_outlined,
-                  color: AppTheme.textSecondary, size: 18),
+              hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              prefixIcon: Icon(Icons.location_on_outlined,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant, size: 18),
               filled: true,
-              fillColor: AppTheme.background,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -532,7 +532,7 @@ class _AddSessionSheetState extends State<_AddSessionSheet> {
                       width: 20, height: 20,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white))
-                  : const Text('Schedule',
+                  : Text('Schedule',
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             ),
           ),
@@ -552,24 +552,24 @@ class _TimePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.background,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(Icons.access_time, size: 16, color: AppTheme.textSecondary),
+          Icon(Icons.access_time, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: 6),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label,
-                  style: const TextStyle(
-                      fontSize: 10, color: AppTheme.textSecondary)),
+                  style: TextStyle(
+                      fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
               Text(time,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary)),
+                      color: Theme.of(context).colorScheme.onSurface)),
             ],
           ),
         ],
@@ -604,7 +604,7 @@ class _SessionTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -627,14 +627,14 @@ class _SessionTile extends StatelessWidget {
               children: [
                 Text(
                   months[session.startTime.month - 1].toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primary),
                 ),
                 Text(
                   '${session.startTime.day}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primary),
@@ -648,35 +648,35 @@ class _SessionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(session.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                     )),
                 const SizedBox(height: 3),
                 Row(
                   children: [
-                    const Icon(Icons.group_outlined,
+                    Icon(Icons.group_outlined,
                         size: 13, color: AppTheme.primary),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(session.groupName,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 12, color: AppTheme.textSecondary)),
+                          style: TextStyle(
+                              fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     ),
                   ],
                 ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(Icons.access_time,
-                        size: 13, color: AppTheme.textSecondary),
+                    Icon(Icons.access_time,
+                        size: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
                       '${fmtTime(session.startTime)} – ${fmtTime(session.endTime)}',
-                      style: const TextStyle(
-                          fontSize: 12, color: AppTheme.textSecondary),
+                      style: TextStyle(
+                          fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -684,12 +684,12 @@ class _SessionTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 13, color: AppTheme.textSecondary),
+                      Icon(Icons.location_on_outlined,
+                          size: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(session.location!,
-                          style: const TextStyle(
-                              fontSize: 12, color: AppTheme.textSecondary)),
+                          style: TextStyle(
+                              fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     ],
                   ),
                 ],
@@ -734,19 +734,19 @@ class _MonthHeader extends StatelessWidget {
       children: [
         IconButton(
           onPressed: onPrev,
-          icon: const Icon(Icons.chevron_left, color: AppTheme.primary),
+          icon: Icon(Icons.chevron_left, color: AppTheme.primary),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
         ),
         Text('${_months[month.month - 1]} ${month.year}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             )),
         IconButton(
           onPressed: onNext,
-          icon: const Icon(Icons.chevron_right, color: AppTheme.primary),
+          icon: Icon(Icons.chevron_right, color: AppTheme.primary),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
         ),
@@ -765,10 +765,10 @@ class _WeekdayRow extends StatelessWidget {
           .map((d) => Expanded(
                 child: Center(
                   child: Text(d,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       )),
                 ),
               ))
@@ -844,7 +844,7 @@ class _DayGrid extends StatelessWidget {
                             ? Colors.white
                             : isToday
                                 ? AppTheme.primary
-                                : AppTheme.textPrimary,
+                                : Theme.of(context).colorScheme.onSurface,
                       )),
                 ),
               ),
@@ -893,10 +893,10 @@ class _BottomNav extends StatelessWidget {
       },
       type: BottomNavigationBarType.fixed,
       selectedItemColor: AppTheme.primary,
-      unselectedItemColor: AppTheme.textSecondary,
+      unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
       showSelectedLabels: true,
       showUnselectedLabels: true,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 8,
       items: const [
         BottomNavigationBarItem(
@@ -923,3 +923,7 @@ class _BottomNav extends StatelessWidget {
     );
   }
 }
+
+
+
+

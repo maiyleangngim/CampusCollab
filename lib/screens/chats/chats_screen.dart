@@ -38,7 +38,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -52,30 +52,30 @@ class _ChatsScreenState extends State<ChatsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Join by Invite Code',
+              Text('Join by Invite Code',
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary)),
+                      color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 6),
-              const Text('Enter the 8-character code shared by a group member.',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              Text('Enter the 8-character code shared by a group member.',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
               const SizedBox(height: 16),
               TextField(
                 controller: codeCtrl,
                 textCapitalization: TextCapitalization.characters,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 6,
                     color: AppTheme.primary),
                 decoration: InputDecoration(
                   hintText: 'ABC12345',
-                  hintStyle: const TextStyle(
-                      color: AppTheme.textSecondary, letterSpacing: 4, fontSize: 18),
+                  hintStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant, letterSpacing: 4, fontSize: 18),
                   filled: true,
-                  fillColor: AppTheme.background,
+                  fillColor: Theme.of(context).scaffoldBackgroundColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -128,7 +128,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Join Group',
+                      : Text('Join Group',
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                 ),
               ),
@@ -142,7 +142,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
   void _showCreateMenu() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -160,13 +160,13 @@ class _ChatsScreenState extends State<ChatsScreen> {
                     borderRadius: BorderRadius.circular(2)),
               ),
               const SizedBox(height: 20),
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text('Add a Group',
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary)),
+                        color: Theme.of(context).colorScheme.onSurface)),
               ),
               const SizedBox(height: 16),
               _MenuItem(
@@ -216,19 +216,19 @@ class _ChatsScreenState extends State<ChatsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('New Folder',
+        title: Text('New Folder',
             style: TextStyle(
-                fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           decoration: InputDecoration(
             hintText: 'Folder name',
-            hintStyle: const TextStyle(color: AppTheme.textSecondary),
+            hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             filled: true,
-            fillColor: AppTheme.background,
+            fillColor: Theme.of(context).scaffoldBackgroundColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
@@ -238,8 +238,8 @@ class _ChatsScreenState extends State<ChatsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: Text('Cancel',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -253,7 +253,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
               await _firestore.createFolder(name);
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Create'),
+            child: Text('Create'),
           ),
         ],
       ),
@@ -264,19 +264,19 @@ class _ChatsScreenState extends State<ChatsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Folder',
+        title: Text('Delete Folder',
             style: TextStyle(
-                fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         content: Text(
             'Delete "${folder.name}"? Groups inside won\'t be removed.',
-            style: const TextStyle(color: AppTheme.textSecondary)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: Text('Cancel',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -289,7 +289,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
               if (mounted) setState(() => _activeFolderId = null);
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Delete'),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -300,7 +300,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
     if (folders.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Create a folder first using the + chip.'),
+          content: Text('Create a folder first using the + chip.'),
           behavior: SnackBarBehavior.floating,
           action: SnackBarAction(
             label: 'Create',
@@ -312,7 +312,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
     }
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
@@ -323,10 +323,10 @@ class _ChatsScreenState extends State<ChatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Add "${group.name}" to folder',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary)),
+                      color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 12),
               ...folders.map((folder) {
                 final inFolder = folder.groupIds.contains(group.id);
@@ -337,14 +337,14 @@ class _ChatsScreenState extends State<ChatsScreen> {
                     decoration: BoxDecoration(
                       color: inFolder
                           ? AppTheme.primary.withValues(alpha: 0.1)
-                          : const Color(0xFFE3F2FD),
+                          : Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       inFolder ? Icons.folder : Icons.folder_outlined,
                       color: inFolder
                           ? AppTheme.primary
-                          : AppTheme.textSecondary,
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                       size: 20,
                     ),
                   ),
@@ -353,9 +353,9 @@ class _ChatsScreenState extends State<ChatsScreen> {
                           fontWeight: FontWeight.w600,
                           color: inFolder
                               ? AppTheme.primary
-                              : AppTheme.textPrimary)),
+                              : Theme.of(context).colorScheme.onSurface)),
                   trailing: inFolder
-                      ? const Icon(Icons.check_circle,
+                      ? Icon(Icons.check_circle,
                           color: AppTheme.primary, size: 20)
                       : null,
                   onTap: () async {
@@ -384,23 +384,23 @@ class _ChatsScreenState extends State<ChatsScreen> {
         final folders = folderSnap.data ?? [];
 
         return Scaffold(
-          backgroundColor: AppTheme.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: AppTheme.surface,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0.5,
-            title: const Text('Chats',
+            title: Text('Chats',
                 style: TextStyle(
-                    color: AppTheme.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 22)),
             actions: [
               IconButton(
-                icon: const Icon(Icons.search, color: AppTheme.textPrimary),
+                icon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurface),
                 onPressed: () {},
               ),
               IconButton(
                 icon:
-                    const Icon(Icons.edit_outlined, color: AppTheme.textPrimary),
+                    Icon(Icons.edit_outlined, color: Theme.of(context).colorScheme.onSurface),
                 onPressed: _showCreateMenu,
               ),
             ],
@@ -409,7 +409,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
             children: [
               // ── Filter chips ────────────────────────────────────────────────
               Container(
-                color: AppTheme.background,
+                color: Theme.of(context).scaffoldBackgroundColor,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: SingleChildScrollView(
@@ -448,22 +448,22 @@ class _ChatsScreenState extends State<ChatsScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppTheme.background,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                                 color: AppTheme.divider,
                                 style: BorderStyle.solid),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.add,
-                                  size: 15, color: AppTheme.textSecondary),
+                                  size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
                               SizedBox(width: 4),
                               Text('New Folder',
                                   style: TextStyle(
                                       fontSize: 13,
-                                      color: AppTheme.textSecondary,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                                       fontWeight: FontWeight.w500)),
                             ],
                           ),
@@ -510,21 +510,21 @@ class _ChatsScreenState extends State<ChatsScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.folder_open,
+                            Icon(Icons.folder_open,
                                 size: 48,
-                                color: AppTheme.textSecondary),
+                                color: Theme.of(context).colorScheme.onSurfaceVariant),
                             const SizedBox(height: 12),
                             Text(
                               'No groups in "${activeFolder?.name}"',
-                              style: const TextStyle(
-                                  color: AppTheme.textPrimary,
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 6),
-                            const Text(
+                            Text(
                               'Long-press a group chat to add it here.',
                               style: TextStyle(
-                                  color: AppTheme.textSecondary,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   fontSize: 13),
                             ),
                           ],
@@ -539,7 +539,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
                       itemBuilder: (context, index) {
                         final group = groups[index];
                         return Container(
-                          color: AppTheme.surface,
+                          color: Theme.of(context).colorScheme.surface,
                           child: GroupChatCard(
                             group: group,
                             onTap: () => Navigator.push(
@@ -562,7 +562,58 @@ class _ChatsScreenState extends State<ChatsScreen> {
           floatingActionButton: FloatingActionButton(
             onPressed: _showCreateMenu,
             backgroundColor: AppTheme.primary,
-            child: const Icon(Icons.add, color: Colors.white),
+            child: Icon(Icons.add, color: Colors.white),
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: 2,
+            onTap: (i) {
+              if (i == 0) {
+                Navigator.pushNamedAndRemoveUntil(
+                    context, AppRoutes.home, (r) => false);
+              }
+              if (i == 1) {
+                Navigator.pushNamedAndRemoveUntil(
+                    context, AppRoutes.discover, (r) => false);
+              }
+              if (i == 3) {
+                Navigator.pushNamedAndRemoveUntil(
+                    context, AppRoutes.calendar, (r) => false);
+              }
+              if (i == 4) {
+                Navigator.pushNamedAndRemoveUntil(
+                    context, AppRoutes.profile, (r) => false);
+              }
+            },
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: AppTheme.primary,
+            unselectedItemColor:
+                Theme.of(context).colorScheme.onSurfaceVariant,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            elevation: 8,
+            items: const [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
+                  label: 'Home'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.explore_outlined),
+                  activeIcon: Icon(Icons.explore),
+                  label: 'Discover'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.chat_bubble_outline),
+                  activeIcon: Icon(Icons.chat_bubble),
+                  label: 'Chat'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_today_outlined),
+                  activeIcon: Icon(Icons.calendar_today),
+                  label: 'Calendar'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: 'Profile'),
+            ],
           ),
         );
       },
@@ -602,14 +653,14 @@ class _FilterChip extends StatelessWidget {
             if (icon != null) ...[
               Icon(icon,
                   size: 13,
-                  color: active ? Colors.white : AppTheme.textSecondary),
+                  color: active ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
             ],
             Text(label,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: active ? Colors.white : AppTheme.textSecondary,
+                  color: active ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                 )),
           ],
         ),
@@ -638,7 +689,7 @@ class _MenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppTheme.background,
+      color: Theme.of(context).scaffoldBackgroundColor,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -662,19 +713,19 @@ class _MenuItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(label,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary)),
+                            color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 2),
                     Text(subtitle,
-                        style: const TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 12)),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right,
-                  color: AppTheme.textSecondary, size: 18),
+              Icon(Icons.chevron_right,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant, size: 18),
             ],
           ),
         ),
@@ -708,21 +759,21 @@ class _EmptyState extends StatelessWidget {
               color: AppTheme.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.group_outlined,
+            child: Icon(Icons.group_outlined,
                 size: 48, color: AppTheme.primary),
           ),
           const SizedBox(height: 20),
-          const Text('No study groups yet',
+          Text('No study groups yet',
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary)),
+                  color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Create a group, join one with an invite\ncode, or browse public groups.',
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: AppTheme.textSecondary, fontSize: 13, height: 1.5),
+                color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13, height: 1.5),
           ),
           const SizedBox(height: 32),
 
@@ -822,7 +873,7 @@ class _ActionCard extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                             color: isPrimary
                                 ? Colors.white
-                                : AppTheme.textPrimary)),
+                                : Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 3),
                     Text(subtitle,
                         maxLines: 2,
@@ -832,7 +883,7 @@ class _ActionCard extends StatelessWidget {
                             height: 1.4,
                             color: isPrimary
                                 ? Colors.white.withValues(alpha: 0.8)
-                                : AppTheme.textSecondary)),
+                                : Theme.of(context).colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -840,7 +891,7 @@ class _ActionCard extends StatelessWidget {
               Icon(Icons.arrow_forward_ios,
                   size: 14,
                   color:
-                      isPrimary ? Colors.white : AppTheme.textSecondary),
+                      isPrimary ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -867,7 +918,7 @@ class _SmallActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppTheme.surface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -887,10 +938,10 @@ class _SmallActionCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(label,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary)),
+                      color: Theme.of(context).colorScheme.onSurface)),
             ],
           ),
         ),
@@ -898,3 +949,7 @@ class _SmallActionCard extends StatelessWidget {
     );
   }
 }
+
+
+
+

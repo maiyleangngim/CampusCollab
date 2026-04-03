@@ -93,7 +93,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     final email = context.read<AppAuthProvider>().user?.email ?? '';
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
@@ -110,18 +110,18 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   color: AppTheme.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.mark_email_unread_outlined,
+                child: Icon(Icons.mark_email_unread_outlined,
                     size: 48, color: AppTheme.primary),
               ),
               const SizedBox(height: 28),
 
               // ── Heading ────────────────────────────────────────────────────
-              const Text(
+              Text(
                 'Verify your email',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -130,13 +130,13 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 'We sent a verification link to',
                 style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.textSecondary.withValues(alpha: 0.8)),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
                 email,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.primary,
@@ -144,11 +144,11 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Open your email and tap the link to\nactivate your account.',
                 style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     height: 1.5),
                 textAlign: TextAlign.center,
               ),
@@ -167,7 +167,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text("I've verified my email",
+                  child: Text("I've verified my email",
                       style: TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w600)),
                 ),
@@ -208,10 +208,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
               // ── Sign out link ──────────────────────────────────────────────
               GestureDetector(
                 onTap: _logout,
-                child: const Text(
+                child: Text(
                   'Use a different account',
                   style: TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 13,
                     decoration: TextDecoration.underline,
                   ),
@@ -225,3 +225,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     );
   }
 }
+
+
+
+

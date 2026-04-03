@@ -116,7 +116,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(
@@ -129,33 +129,33 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Join by Invite Code',
+              Text('Join by Invite Code',
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary)),
+                      color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 6),
-              const Text('Enter the 8-character code from your group member.',
+              Text('Enter the 8-character code from your group member.',
                   style:
-                      TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                      TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
               const SizedBox(height: 16),
               TextField(
                 controller: codeCtrl,
                 textCapitalization: TextCapitalization.characters,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 6,
                     color: AppTheme.primary),
                 decoration: InputDecoration(
                   hintText: 'ABC12345',
-                  hintStyle: const TextStyle(
-                      color: AppTheme.textSecondary,
+                  hintStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       letterSpacing: 4,
                       fontSize: 18),
                   filled: true,
-                  fillColor: AppTheme.background,
+                  fillColor: Theme.of(context).scaffoldBackgroundColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -212,7 +212,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white))
-                      : const Text('Join Group',
+                      : Text('Join Group',
                           style: TextStyle(
                               fontSize: 15, fontWeight: FontWeight.bold)),
                 ),
@@ -227,20 +227,20 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
         title: Row(
           children: [
             Image.asset('assets/images/logo.png', width: 28),
             const SizedBox(width: 8),
-            const Text('CampusCollab', style: AppTheme.titleStyle),
+            Text('CampusCollab', style: AppTheme.titleStyle),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.vpn_key_outlined, color: AppTheme.primary),
+            icon: Icon(Icons.vpn_key_outlined, color: AppTheme.primary),
             tooltip: 'Join by code',
             onPressed: _showJoinByCode,
           ),
@@ -251,16 +251,16 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         children: [
           // ── Header + Search ──────────────────────────────────────────────
           Container(
-            color: AppTheme.surface,
+            color: Theme.of(context).colorScheme.surface,
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Discover Groups',
+                Text('Discover Groups',
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                     )),
                 const SizedBox(height: 12),
                 TextField(
@@ -268,14 +268,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   onChanged: (v) => setState(() => _searchQuery = v),
                   decoration: InputDecoration(
                     hintText: 'Search by course, topic, or group name...',
-                    hintStyle: const TextStyle(
-                        fontSize: 13, color: AppTheme.textSecondary),
-                    prefixIcon: const Icon(Icons.search,
-                        color: AppTheme.textSecondary, size: 20),
+                    hintStyle: TextStyle(
+                        fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    prefixIcon: Icon(Icons.search,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear,
-                                color: AppTheme.textSecondary, size: 18),
+                            icon: Icon(Icons.clear,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant, size: 18),
                             onPressed: () {
                               _searchController.clear();
                               setState(() => _searchQuery = '');
@@ -283,7 +283,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                           )
                         : null,
                     filled: true,
-                    fillColor: AppTheme.background,
+                    fillColor: Theme.of(context).scaffoldBackgroundColor,
                     contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -297,7 +297,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
           // ── Filter Chips ─────────────────────────────────────────────────
           Container(
-            color: AppTheme.surface,
+            color: Theme.of(context).colorScheme.surface,
             padding: const EdgeInsets.only(bottom: 12),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -329,7 +329,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               fontWeight: FontWeight.w500,
                               color: active
                                   ? Colors.white
-                                  : AppTheme.textSecondary,
+                                  : Theme.of(context).colorScheme.onSurfaceVariant,
                             )),
                       ),
                     ),
@@ -354,12 +354,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               children: [
                                 Icon(Icons.search_off,
                                     size: 48,
-                                    color: AppTheme.textSecondary
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant
                                         .withValues(alpha: 0.4)),
                                 const SizedBox(height: 12),
-                                const Text('No groups found',
+                                Text('No groups found',
                                     style: TextStyle(
-                                        color: AppTheme.textSecondary,
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                                         fontSize: 15)),
                               ],
                             ),
@@ -384,8 +384,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.pushNamed(context, AppRoutes.createGroup),
         backgroundColor: AppTheme.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('New Group',
+        icon: Icon(Icons.add, color: Colors.white),
+        label: Text('New Group',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
 
@@ -399,10 +399,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppTheme.primary,
-        unselectedItemColor: AppTheme.textSecondary,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
         showSelectedLabels: true,
         showUnselectedLabels: true,
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 8,
         items: const [
           BottomNavigationBarItem(
@@ -464,7 +464,7 @@ class _GroupCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -487,8 +487,8 @@ class _GroupCard extends StatelessWidget {
               _Tag(label: _templateLabel, color: color),
               const Spacer(),
               Text('${group.memberCount}/${group.maxMembers}',
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 11,
                       fontWeight: FontWeight.w500)),
             ],
@@ -496,15 +496,15 @@ class _GroupCard extends StatelessWidget {
           const SizedBox(height: 10),
 
           Text(group.name,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary)),
+                  color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 4),
 
           if (group.subject.isNotEmpty)
             Text(group.subject,
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppTheme.primary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600)),
@@ -514,9 +514,9 @@ class _GroupCard extends StatelessWidget {
             Text(group.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13,
-                    color: AppTheme.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     height: 1.4)),
           ],
 
@@ -531,14 +531,14 @@ class _GroupCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: AppTheme.background,
+                          color: Theme.of(context).scaffoldBackgroundColor,
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(color: AppTheme.divider),
                         ),
                         child: Text(t,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 10,
-                                color: AppTheme.textSecondary,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500)),
                       ))
                   .toList(),
@@ -549,13 +549,13 @@ class _GroupCard extends StatelessWidget {
 
           Row(
             children: [
-              const Icon(Icons.people_outline,
-                  size: 14, color: AppTheme.textSecondary),
+              Icon(Icons.people_outline,
+                  size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
               Text('${group.memberCount} members',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500)),
               const Spacer(),
               ElevatedButton(
@@ -577,7 +577,7 @@ class _GroupCard extends StatelessWidget {
                         height: 14,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : const Text('Join',
+                    : Text('Join',
                         style: TextStyle(
                             fontSize: 13, fontWeight: FontWeight.bold)),
               ),
@@ -613,3 +613,7 @@ class _Tag extends StatelessWidget {
     );
   }
 }
+
+
+
+

@@ -36,6 +36,7 @@ lib/
 │   └── auth_provider.dart           # AppAuthProvider (ChangeNotifier)
 │                                    # isEmailVerified reads Firestore (not Firebase Auth flag)
 │                                    # refreshEmailVerified() — call after OTP success
+│   └── theme_provider.dart          # ThemeMode (light/dark/system) + local persistence
 │
 ├── screens/
 │   ├── auth/
@@ -66,7 +67,7 @@ lib/
 ├── services/
 │   ├── auth_service.dart            # Firebase Auth + Firestore user doc creation; uses OTP on register
 │   ├── firestore_service.dart       # All Firestore reads/writes; _uid getter throws if not authed
-│   ├── otp_service.dart             # Generate (SHA-256 hash) + verify 6-digit OTP; 10-min expiry
+│   ├── otp_service.dart             # Generate (SHA-256 hash) + verify 6-digit OTP; 15-min expiry
 │   ├── email_service.dart           # EmailJS REST; fill in 4 constants before use
 │   └── storage_service.dart         # Firebase Storage helpers
 │
@@ -108,6 +109,8 @@ AuthGate (app startup):
 ## Key conventions
 
 - **Colors / styles**: Always use `AppTheme.*` constants — never hardcode hex values inline.
+- **Adaptive text colors (mandatory)**: In widgets/screens, never use fixed `AppTheme.textPrimary` / `AppTheme.textSecondary` for foreground text. Always use `Theme.of(context).colorScheme.onSurface` and `Theme.of(context).colorScheme.onSurfaceVariant` so text remains readable in both light and dark modes.
+- **Theme-aware constants rule**: If any color/style in a widget uses `Theme.of(context)`, do not wrap that `Text`, `Icon`, `TextStyle`, `BoxDecoration`, or parent container in `const`.
 - **Firestore timestamps**: Use `StudyGroup._fmtTime()` or `.toDate()` — never print a raw `Timestamp`.
 - **Navigation after async**: Capture `Navigator.of(context)` and `context.read<T>()` *before* the first `await` in any async handler.
 - **Mounted checks**: Always `if (!mounted) return;` after every `await` that touches the widget.
@@ -124,6 +127,7 @@ firebase_core, firebase_auth, cloud_firestore, firebase_storage
 provider, google_sign_in
 image_picker, qr_flutter, share_plus, url_launcher
 http, crypto
+shared_preferences (theme mode persistence)
 ```
 Adding any new package requires explicit user approval first.
 
@@ -161,11 +165,22 @@ Fill in four constants in `lib/services/email_service.dart`:
 | Never commit `.env` files, API keys, or secrets | EmailJS keys live in `email_service.dart` only; warn user before committing that file |
 | Never skip `if (!mounted) return` after `await` | Causes setState-on-disposed-widget crashes |
 | Never use `BuildContext` after `await` without capturing it first | Causes context-across-async-gap linter errors and potential crashes |
+| Never use fixed text colors in screens (`AppTheme.textPrimary` / `AppTheme.textSecondary`) | They can blend into dark surfaces; use `ColorScheme.onSurface*` from `Theme.of(context)` |
 | Never call `_auth.currentUser!.uid` with a bang | Use `FirestoreService._uid` or null-check first |
 | Never add dummy/mock data to production paths | Keep dummy_data.dart isolated; don't import it from real screens |
 | Never send OTP plain-text to Firestore | Hash with SHA-256 via `OtpService._hash()` before storing |
 | Never create files unless strictly necessary | Edit existing files first |
 | Never write trailing "here's what I did" summaries | User can read the diff |
+
+---
+
+## Lessons Learned (living log)
+
+- Dark mode regression: fixed text constants (`AppTheme.textPrimary`/`textSecondary`) caused low contrast on dark surfaces; project rule is now to use `Theme.of(context).colorScheme.onSurface` and `.onSurfaceVariant` for all screen text/icons.
+- Theme migration pitfall: converting to `Theme.of(context)` inside previously `const` widgets triggers `const_eval_method_invocation`; remove `const` on those specific widgets/styles during migration.
+- Theme persistence: theme mode must be stored locally (device-level) and restored on app start; use local storage in `ThemeProvider` rather than transient in-memory state.
+- Chat input regression: hardcoded `Colors.white` / `Colors.grey` in `ChatInputBar` ignored dark mode. Input bar/container colors must always derive from `ColorScheme` and `scaffoldBackgroundColor`.
+- Chat navigation regression: every primary screen (`Home`, `Discover`, `Chats`, `Calendar`, `Profile`) must keep a working bottom nav path, otherwise users can feel stuck on a screen.
 
 ---
 

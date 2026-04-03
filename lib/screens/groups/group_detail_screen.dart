@@ -76,13 +76,13 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Leave Group'),
+        title: Text('Leave Group'),
         content: Text('Leave "${_group.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Leave', style: TextStyle(color: Colors.red)),
+            child: Text('Leave', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -97,11 +97,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
-        title: const Text('Group Info', style: AppTheme.titleStyle),
+        title: Text('Group Info', style: AppTheme.titleStyle),
         leading: const BackButton(color: AppTheme.primary),
       ),
       body: SingleChildScrollView(
@@ -114,7 +114,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
               ),
@@ -137,10 +137,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(_group.name,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                             if (_group.courseCode.isNotEmpty)
                               Text(_group.courseCode,
-                                  style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 13)),
+                                  style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 13)),
                           ],
                         ),
                       ),
@@ -149,7 +149,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                   ),
                   if (_group.description.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    Text(_group.description, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13, height: 1.5)),
+                    Text(_group.description, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13, height: 1.5)),
                   ],
                   if (_group.tags.isNotEmpty) ...[
                     const SizedBox(height: 12),
@@ -158,18 +158,18 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                       runSpacing: 6,
                       children: _group.tags.map((t) => Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: const Color(0xFFE3F2FD), borderRadius: BorderRadius.circular(8)),
-                        child: Text(t, style: const TextStyle(color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.bold)),
+                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+                        child: Text(t, style: TextStyle(color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.bold)),
                       )).toList(),
                     ),
                   ],
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.people_outline, size: 15, color: AppTheme.textSecondary),
+                      Icon(Icons.people_outline, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text('${_group.memberCount} / ${_group.maxMembers} members',
-                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
                     ],
                   ),
                 ],
@@ -183,7 +183,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppTheme.divider),
               ),
@@ -210,7 +210,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: AppTheme.background,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: AppTheme.divider),
                     ),
@@ -218,7 +218,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(_group.inviteCode,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 6,
@@ -231,7 +231,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                               const SnackBar(content: Text('Code copied!'), behavior: SnackBarBehavior.floating),
                             );
                           },
-                          child: const Icon(Icons.copy, color: AppTheme.textSecondary, size: 20),
+                          child: Icon(Icons.copy, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
                         ),
                       ],
                     ),
@@ -244,8 +244,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                           onPressed: () => Share.share(
                             'Join my study group "${_group.name}" on CampusCollab!\nInvite code: ${_group.inviteCode}',
                           ),
-                          icon: const Icon(Icons.share, size: 18),
-                          label: const Text('Share Invite'),
+                          icon: Icon(Icons.share, size: 18),
+                          label: Text('Share Invite'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
                             foregroundColor: Colors.white,
@@ -260,8 +260,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                           onPressed: _regenerating ? null : _regenerateCode,
                           icon: _regenerating
                               ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Icon(Icons.refresh, size: 18),
-                          label: const Text('New Code'),
+                              : Icon(Icons.refresh, size: 18),
+                          label: Text('New Code'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppTheme.primary,
                             side: const BorderSide(color: AppTheme.primary),
@@ -281,7 +281,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
             _sectionLabel('MEMBERS (${_members.length})'),
             Container(
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppTheme.divider),
               ),
@@ -301,34 +301,34 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                             ListTile(
                               leading: CircleAvatar(
                                 radius: 20,
-                                backgroundColor: const Color(0xFFE3F2FD),
+                                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                                 backgroundImage: m['avatarUrl'] != null
                                     ? NetworkImage(m['avatarUrl'])
                                     : null,
                                 child: m['avatarUrl'] == null
-                                    ? const Icon(Icons.person, color: AppTheme.primary, size: 22)
+                                    ? Icon(Icons.person, color: AppTheme.primary, size: 22)
                                     : null,
                               ),
                               title: Row(
                                 children: [
                                   Text(
                                     m['displayName'] ?? 'Unknown',
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppTheme.textPrimary),
+                                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                                   ),
                                   if (isMe) ...[
                                     const SizedBox(width: 6),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFE3F2FD),
+                                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
-                                      child: const Text('You', style: TextStyle(fontSize: 10, color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                                      child: Text('You', style: TextStyle(fontSize: 10, color: AppTheme.primary, fontWeight: FontWeight.bold)),
                                     ),
                                   ],
                                 ],
                               ),
-                              subtitle: Text(m['major'] ?? '', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                              subtitle: Text(m['major'] ?? '', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
                               trailing: _roleBadge(m['role'] ?? 'member'),
                             ),
                           ],
@@ -344,8 +344,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: _leaveGroup,
-                  icon: const Icon(Icons.exit_to_app, color: Colors.red),
-                  label: const Text('Leave Group', style: TextStyle(color: Colors.red)),
+                  icon: Icon(Icons.exit_to_app, color: Colors.red),
+                  label: Text('Leave Group', style: TextStyle(color: Colors.red)),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.red),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -364,8 +364,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(label,
-          style: const TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.textSecondary, letterSpacing: 1.2)),
+          style: TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurfaceVariant, letterSpacing: 1.2)),
     );
   }
 
@@ -400,7 +400,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     } else if (role == 'mentor') {
       color = const Color(0xFF059669);
     } else {
-      color = AppTheme.textSecondary;
+      color = Theme.of(context).colorScheme.onSurfaceVariant;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -409,3 +409,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
   }
 }
+
+
+
+

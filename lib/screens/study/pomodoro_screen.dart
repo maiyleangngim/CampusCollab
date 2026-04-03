@@ -111,16 +111,16 @@ class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStat
     final Color phaseColor = _isBreak ? const Color(0xFF059669) : AppTheme.primary;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
         leading: const BackButton(color: AppTheme.primary),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Pomodoro Timer', style: AppTheme.titleStyle),
-            Text(widget.groupName, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+            Text('Pomodoro Timer', style: AppTheme.titleStyle),
+            Text(widget.groupName, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
           ],
         ),
       ),
@@ -175,7 +175,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStat
                       const SizedBox(height: 4),
                       Text(
                         _isBreak ? 'Rest up!' : 'Stay focused',
-                        style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                       ),
                     ],
                   ),
@@ -191,8 +191,8 @@ class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStat
                 // Reset
                 _circleButton(
                   icon: Icons.replay,
-                  color: AppTheme.textSecondary,
-                  bgColor: AppTheme.background,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  bgColor: Theme.of(context).scaffoldBackgroundColor,
                   onTap: _reset,
                   size: 52,
                 ),
@@ -219,8 +219,8 @@ class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStat
                 // Skip
                 _circleButton(
                   icon: Icons.skip_next,
-                  color: AppTheme.textSecondary,
-                  bgColor: AppTheme.background,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  bgColor: Theme.of(context).scaffoldBackgroundColor,
                   onTap: _skipPhase,
                   size: 52,
                 ),
@@ -233,7 +233,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStat
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
               ),
@@ -246,12 +246,12 @@ class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStat
                   const SizedBox(height: 12),
                   Text(
                     '$_sessionsCompleted session${_sessionsCompleted == 1 ? '' : 's'} completed',
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                    style: TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                   ),
                   const SizedBox(height: 4),
-                  const Text('Every 4 sessions = long break',
-                      style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                  Text('Every 4 sessions = long break',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
                 ],
               ),
             ),
@@ -316,3 +316,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStat
     );
   }
 }
+
+
+
+

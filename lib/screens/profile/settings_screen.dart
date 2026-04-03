@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:campuscollab/theme/app_theme.dart';
 import 'package:campuscollab/constants/app_routes.dart';
 import 'package:campuscollab/providers/auth_provider.dart';
+import 'package:campuscollab/providers/theme_provider.dart';
 import 'package:campuscollab/services/firestore_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -17,7 +18,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _pushNotifications = true;
   bool _emailDigests = false;
   bool _privateProfile = false;
-  String _selectedTheme = "Light";
 
   String _name = '';
   String _major = '';
@@ -46,15 +46,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
+          icon: Icon(Icons.arrow_back, color: AppTheme.primary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Settings', style: AppTheme.titleStyle),
+        title: Text(
+          'Settings',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -124,7 +130,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -140,7 +146,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: const Color(0xFFE3F2FD),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(16),
               image: _avatarUrl != null
                   ? DecorationImage(
@@ -150,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : null,
             ),
             child: _avatarUrl == null
-                ? const Icon(Icons.person, color: AppTheme.primary, size: 36)
+                ? Icon(Icons.person, color: AppTheme.primary, size: 36)
                 : null,
           ),
           const SizedBox(width: 16),
@@ -160,22 +166,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   _name.isEmpty ? 'Your Name' : _name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 if (_major.isNotEmpty)
                   Text(
                     _major,
-                    style: const TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 13),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
                   ),
                 const SizedBox(height: 6),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'Edit Profile',
                     style: TextStyle(
                       color: AppTheme.primary,
@@ -197,10 +205,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.only(left: 4, bottom: 12),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: AppTheme.textSecondary,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           letterSpacing: 1.2,
         ),
       ),
@@ -210,7 +218,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildSettingsContainer(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -238,7 +246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFE3F2FD),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: AppTheme.primary, size: 20),
@@ -250,15 +258,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
-                    color: AppTheme.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -284,51 +295,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFFE3F2FD),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: AppTheme.primary, size: 20),
       ),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w600,
           fontSize: 15,
-          color: AppTheme.textPrimary,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
 
   Widget _buildThemeSelector() {
+    final selectedTheme = context.watch<ThemeProvider>().selectedThemeLabel;
+
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.divider),
       ),
       child: Row(
         children: [
-          _buildThemeOption(Icons.wb_sunny_outlined, "Light"),
-          _buildThemeOption(Icons.nightlight_outlined, "Dark"),
-          _buildThemeOption(Icons.settings_overscan_outlined, "System"),
+          _buildThemeOption(Icons.wb_sunny_outlined, "Light", selectedTheme),
+          _buildThemeOption(Icons.nightlight_outlined, "Dark", selectedTheme),
+          _buildThemeOption(
+              Icons.settings_overscan_outlined, "System", selectedTheme),
         ],
       ),
     );
   }
 
-  Widget _buildThemeOption(IconData icon, String label) {
-    final bool isSelected = _selectedTheme == label;
+  Widget _buildThemeOption(IconData icon, String label, String selectedTheme) {
+    final bool isSelected = selectedTheme == label;
+
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _selectedTheme = label),
+        onTap: () {
+          final provider = context.read<ThemeProvider>();
+          switch (label) {
+            case 'Light':
+              provider.setThemeMode(ThemeMode.light);
+              break;
+            case 'Dark':
+              provider.setThemeMode(ThemeMode.dark);
+              break;
+            default:
+              provider.setThemeMode(ThemeMode.system);
+          }
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFE3F2FD) : Colors.transparent,
+            color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -337,7 +367,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Icon(
                 icon,
                 size: 18,
-                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                color: isSelected
+                    ? AppTheme.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
               Text(
@@ -345,7 +377,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                  color: isSelected
+                      ? AppTheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -366,10 +400,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
-          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-          child: const Icon(Icons.logout, color: Colors.red, size: 20),
+          decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          child: Icon(Icons.logout, color: Colors.red, size: 20),
         ),
-        title: const Text(
+        title: Text(
           "Log Out",
           style: TextStyle(
             color: Colors.red,
@@ -398,8 +432,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
       type: BottomNavigationBarType.fixed,
       selectedItemColor: AppTheme.primary,
-      unselectedItemColor: AppTheme.textSecondary,
-      backgroundColor: AppTheme.surface,
+      unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 8,
       showSelectedLabels: true,
       showUnselectedLabels: true,
@@ -428,3 +462,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+
+
+
+
+

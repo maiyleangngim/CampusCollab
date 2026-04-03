@@ -84,36 +84,50 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     }
   }
 
-  Future<void> _setup() async {
-    if (widget.autoSendOnLoad) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        if (mounted) setState(() => _isLoading = false);
-        return;
-      }
-      _uid = user.uid;
-      _email = user.email ?? '';
-      try {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-        _name = doc.data()?['displayName'] as String? ?? '';
-      } catch (_) {
-        _name = '';
-      }
-      await _sendOtp(startCooldown: true);
-    } else {
-      _uid = widget.initialUid ?? FirebaseAuth.instance.currentUser?.uid ?? '';
-      _email = widget.initialEmail ?? '';
-      _name = widget.initialName ?? '';
-      _startCooldown();
-    }
+  Future<void> _cancelEmailVerification() async {
+    final nav = Navigator.of(context);
+    final auth = context.read<AppAuthProvider>();
+    await auth.logout();
+    if (!mounted) return;
+    nav.pushNamedAndRemoveUntil(AppRoutes.login, (r) => false);
+  }
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _focusNodes[0].requestFocus());
+  Future<void> _setup() async {
+    try {
+      if (widget.autoSendOnLoad) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) return;
+
+        _uid = user.uid;
+        _email = user.email ?? '';
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+          _name = doc.data()?['displayName'] as String? ?? '';
+        } catch (_) {
+          _name = '';
+        }
+        await _sendOtp(startCooldown: true);
+      } else {
+        _uid = widget.initialUid ?? FirebaseAuth.instance.currentUser?.uid ?? '';
+        _email = widget.initialEmail ?? '';
+        _name = widget.initialName ?? '';
+        _startCooldown();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _error = 'Could not send verification code. Please try again.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => _focusNodes[0].requestFocus());
+      }
     }
   }
 
@@ -143,6 +157,22 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   }
 
   String get _code => _controllers.map((c) => c.text).join();
+
+  void _applyOtpFromIndex(int startIndex, String rawValue) {
+    final digits = rawValue.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return;
+
+    for (int j = 0; j < digits.length && (startIndex + j) < 6; j++) {
+      _controllers[startIndex + j].text = digits[j];
+    }
+
+    final nextIndex = (startIndex + digits.length).clamp(0, 5);
+    if (_code.length == 6) {
+      FocusScope.of(context).unfocus();
+    } else {
+      _focusNodes[nextIndex].requestFocus();
+    }
+  }
 
   Future<void> _sendOtp({bool startCooldown = false}) async {
     final code = await _otpService.generateAndStore(_uid, widget.purpose);
@@ -245,20 +275,27 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     final isVerification = widget.purpose == OtpPurpose.emailVerification;
     final maskedEmail = _maskEmail(_email);
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: AppTheme.background,
-        elevation: 0,
-        automaticallyImplyLeading: !isVerification,
-        leading: isVerification
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.pop(context),
-              ),
-      ),
-      body: SafeArea(
+    return PopScope(
+      canPop: !isVerification,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop && isVerification) {
+          await _cancelEmailVerification();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          automaticallyImplyLeading: !isVerification,
+          leading: isVerification
+              ? null
+              : IconButton(
+                  icon: Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.pop(context),
+                ),
+        ),
+        body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
@@ -274,7 +311,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                   color: AppTheme.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.mark_email_read_outlined,
+                child: Icon(Icons.mark_email_read_outlined,
                     color: AppTheme.primary, size: 40),
               ),
               const SizedBox(height: 28),
@@ -282,10 +319,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
               // ── Title ─────────────────────────────────────────────────────
               Text(
                 isVerification ? 'Verify your email' : 'Enter reset code',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -293,9 +330,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
               Text(
                 'We sent a 6-digit code to\n$maskedEmail',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppTheme.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -307,18 +344,26 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   6,
-                  (i) => _OtpBox(
-                    controller: _controllers[i],
-                    focusNode: _focusNodes[i],
-                    onInput: (val) {
-                      setState(() => _error = null);
-                      if (val.isNotEmpty && i < 5) {
-                        _focusNodes[i + 1].requestFocus();
-                      }
-                      if (_code.length == 6) {
-                        Future.microtask(_verify);
-                      }
-                    },
+                  (i) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: _OtpBox(
+                      controller: _controllers[i],
+                      focusNode: _focusNodes[i],
+                      onInput: (val) {
+                        setState(() => _error = null);
+                        final digits = val.replaceAll(RegExp(r'\D'), '');
+
+                        // Handle SMS autofill/paste where all 6 digits can arrive in one field.
+                        if (digits.length > 1) {
+                          _applyOtpFromIndex(i, digits);
+                          return;
+                        }
+
+                        if (digits.isNotEmpty && i < 5) {
+                          _focusNodes[i + 1].requestFocus();
+                        }
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -328,7 +373,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                 const SizedBox(height: 16),
                 Text(
                   _error!,
-                  style: const TextStyle(color: Colors.red, fontSize: 13),
+                  style: TextStyle(color: Colors.red, fontSize: 13),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -348,7 +393,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2.5, color: Colors.white),
                         )
-                      : const Text('Verify Code',
+                      : Text('Verify Code',
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
@@ -359,8 +404,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
               if (_resendCooldown > 0)
                 Text(
                   'Resend code in ${_resendCooldown}s',
-                  style: const TextStyle(
-                      fontSize: 13, color: AppTheme.textSecondary),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 )
               else
                 GestureDetector(
@@ -371,7 +418,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text(
+                      : Text(
                           "Didn't receive a code? Resend",
                           style: TextStyle(
                             fontSize: 13,
@@ -381,52 +428,16 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                         ),
                 ),
 
-              const SizedBox(height: 40),
-
-              // ── Disclaimer ────────────────────────────────────────────────
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF8E1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFFD54F)),
-                ),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline,
-                        color: Color(0xFFF57F17), size: 18),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        "If you didn't request this code, you can safely ignore "
-                        'this message. Your account will remain secure.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6D4C00),
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
               // ── Sign out (verification only) ──────────────────────────────
               if (isVerification) ...[
                 const SizedBox(height: 24),
                 GestureDetector(
-                  onTap: () async {
-                    final nav = Navigator.of(context);
-                    await context.read<AppAuthProvider>().logout();
-                    nav.pushNamedAndRemoveUntil(
-                        AppRoutes.login, (r) => false);
-                  },
-                  child: const Text(
+                  onTap: _cancelEmailVerification,
+                  child: Text(
                     'Sign out',
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       decoration: TextDecoration.underline,
                     ),
                   ),
@@ -437,6 +448,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -486,44 +498,47 @@ class _OtpBoxState extends State<_OtpBox> {
   @override
   Widget build(BuildContext context) {
     final hasFocus = widget.focusNode.hasFocus;
-    return Container(
+
+    return SizedBox(
       width: 44,
       height: 54,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: hasFocus ? AppTheme.primary : AppTheme.divider,
-          width: hasFocus ? 2 : 1,
-        ),
-      ),
       child: TextField(
         controller: widget.controller,
         focusNode: widget.focusNode,
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
+        textInputAction: TextInputAction.next,
         maxLength: 1,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.bold,
-          color: AppTheme.textPrimary,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           counterText: '',
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
+          isDense: true,
+          filled: true,
+          fillColor: Theme.of(context).colorScheme.surface,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppTheme.divider, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: hasFocus ? AppTheme.primary : AppTheme.divider,
+              width: hasFocus ? 2 : 1,
+            ),
+          ),
         ),
-        onChanged: (val) {
-          if (val.length > 1) {
-            widget.controller.text = val[val.length - 1];
-            widget.controller.selection =
-                const TextSelection.collapsed(offset: 1);
-          }
-          widget.onInput(widget.controller.text);
-        },
+        onChanged: widget.onInput,
       ),
     );
   }
 }
+
+
+
+

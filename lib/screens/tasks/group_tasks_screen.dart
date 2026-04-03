@@ -39,17 +39,17 @@ class _GroupTasksScreenState extends State<GroupTasksScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
         leading: const BackButton(color: AppTheme.primary),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Group Tasks', style: AppTheme.titleStyle),
+            Text('Group Tasks', style: AppTheme.titleStyle),
             Text(widget.groupName,
-                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
           ],
         ),
       ),
@@ -57,7 +57,7 @@ class _GroupTasksScreenState extends State<GroupTasksScreen> {
         children: [
           // ── Add task bar ──────────────────────────────────────────────────
           Container(
-            color: AppTheme.surface,
+            color: Theme.of(context).colorScheme.surface,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Row(
               children: [
@@ -66,16 +66,16 @@ class _GroupTasksScreenState extends State<GroupTasksScreen> {
                     controller: _taskCtrl,
                     decoration: InputDecoration(
                       hintText: 'Add a new task...',
-                      hintStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                      hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
                       filled: true,
-                      fillColor: AppTheme.background,
+                      fillColor: Theme.of(context).scaffoldBackgroundColor,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                     ),
-                    style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     onSubmitted: (_) => _addTask(),
                   ),
                 ),
@@ -94,7 +94,7 @@ class _GroupTasksScreenState extends State<GroupTasksScreen> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
-                        : const Icon(Icons.add, color: Colors.white, size: 20),
+                        : Icon(Icons.add, color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -116,11 +116,11 @@ class _GroupTasksScreenState extends State<GroupTasksScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.checklist_outlined, size: 56, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
+                        Icon(Icons.checklist_outlined, size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
                         const SizedBox(height: 12),
-                        const Text('No tasks yet', style: TextStyle(color: AppTheme.textSecondary, fontSize: 15)),
+                        Text('No tasks yet', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 15)),
                         const SizedBox(height: 4),
-                        const Text('Add one above to get started', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                        Text('Add one above to get started', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
                       ],
                     ),
                   );
@@ -153,8 +153,8 @@ class _GroupTasksScreenState extends State<GroupTasksScreen> {
 
   Widget _sectionLabel(String label) {
     return Text(label,
-        style: const TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.textSecondary, letterSpacing: 1.2));
+        style: TextStyle(
+            fontSize: 11, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurfaceVariant, letterSpacing: 1.2));
   }
 }
 
@@ -169,7 +169,7 @@ class _TaskTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
       ),
@@ -184,12 +184,12 @@ class _TaskTile extends StatelessWidget {
               color: task.isCompleted ? AppTheme.primary : Colors.transparent,
               shape: BoxShape.circle,
               border: Border.all(
-                color: task.isCompleted ? AppTheme.primary : AppTheme.textSecondary,
+                color: task.isCompleted ? AppTheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
                 width: 2,
               ),
             ),
             child: task.isCompleted
-                ? const Icon(Icons.check, color: Colors.white, size: 14)
+                ? Icon(Icons.check, color: Colors.white, size: 14)
                 : null,
           ),
         ),
@@ -197,7 +197,7 @@ class _TaskTile extends StatelessWidget {
           task.title,
           style: TextStyle(
             fontSize: 14,
-            color: task.isCompleted ? AppTheme.textSecondary : AppTheme.textPrimary,
+            color: task.isCompleted ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.onSurface,
             decoration: task.isCompleted ? TextDecoration.lineThrough : null,
             fontWeight: FontWeight.w500,
           ),
@@ -209,11 +209,11 @@ class _TaskTile extends StatelessWidget {
                     fontSize: 11,
                     color: task.dueDate!.isBefore(DateTime.now()) && !task.isCompleted
                         ? Colors.red
-                        : AppTheme.textSecondary),
+                        : Theme.of(context).colorScheme.onSurfaceVariant),
               )
             : null,
         trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: AppTheme.textSecondary, size: 20),
+          icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
           onPressed: () => FirestoreService().deleteTask(groupId, task.id),
         ),
       ),
@@ -225,3 +225,7 @@ class _TaskTile extends StatelessWidget {
     return '${months[d.month - 1]} ${d.day}';
   }
 }
+
+
+
+
