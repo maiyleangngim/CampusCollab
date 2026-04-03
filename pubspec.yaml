@@ -57,6 +57,15 @@ dependencies:
   # URL launching
   url_launcher: ^6.3.0
 
+  # HTTP client (EmailJS API)
+  http: ^1.2.0
+
+  # SHA-256 hashing for OTP storage
+  crypto: ^3.0.3
+
+  # Google Fonts — Nunito
+  google_fonts: ^6.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

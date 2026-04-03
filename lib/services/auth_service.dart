@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'otp_service.dart';
+import 'email_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -30,9 +32,14 @@ class AuthService {
       'subjects': [],
       'avatarUrl': null,
       'isLookingForGroup': false,
+      'emailVerified': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    await cred.user!.sendEmailVerification();
+    // Generate a 6-digit OTP and send it via email instead of Firebase's link
+    final code = await OtpService()
+        .generateAndStore(cred.user!.uid, OtpPurpose.emailVerification);
+    await EmailService()
+        .sendVerificationCode(toEmail: email, name: name, code: code);
     return cred;
   }
 

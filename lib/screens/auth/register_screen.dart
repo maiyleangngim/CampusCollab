@@ -2,11 +2,14 @@
 // REGISTER SCREEN
 // =============================================================================
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
-import '../../constants/app_routes.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/otp_service.dart';
+import 'auth_widgets.dart';
+import 'verify_otp_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -57,12 +60,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
     if (success) {
-      Navigator.of(context)
-          .pushNamedAndRemoveUntil(AppRoutes.emailVerification, (route) => false);
-    } else if (auth.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final email = _emailController.text.trim();
+      final name = _nameController.text.trim();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => VerifyOtpScreen(
+            initialUid: uid,
+            initialEmail: email,
+            initialName: name,
+            purpose: OtpPurpose.emailVerification,
+          ),
+        ),
+        (route) => false,
       );
+    } else if (auth.error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(auth.error!)));
       auth.clearError();
     }
   }
@@ -73,105 +87,87 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spacingLg, vertical: AppTheme.spacingXl),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Logo ───────────────────────────────────────────────────
-                Center(
-                  child: Column(
-                    children: [
-                      Image.asset('assets/images/logo.png', width: 72),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'CampusCollab',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primary,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 40),
+                // ── Logo ──────────────────────────────────────────────────────
+                const AuthLogoHeader(),
+                const SizedBox(height: AppTheme.spacingXl + 8),
 
-                // ── Heading ────────────────────────────────────────────────
-                const Text(
-                  'Create an account',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
+                // ── Heading ───────────────────────────────────────────────────
+                const Text('Create an account', style: AppTheme.headingStyle),
                 const SizedBox(height: 6),
                 const Text(
                   'Fill in your details to get started.',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textSecondary,
-                  ),
+                      fontSize: 15,
+                      color: AppTheme.textSecondary,
+                      height: 1.5),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppTheme.spacingXl),
 
-                // ── Full Name ──────────────────────────────────────────────
-                const _FieldLabel('Full Name'),
+                // ── Full Name ─────────────────────────────────────────────────
+                const AuthFieldLabel('Full Name'),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
                     hintText: 'John Doe',
                     prefixIcon: Icon(Icons.person_outline,
-                        color: AppTheme.textSecondary),
+                        color: AppTheme.textTertiary),
                   ),
-                  validator: (value) =>
-                      (value == null || value.isEmpty) ? 'Enter your name' : null,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Enter your name' : null,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppTheme.spacingMd),
 
-                // ── Email ──────────────────────────────────────────────────
-                const _FieldLabel('Email Address'),
+                // ── Email ─────────────────────────────────────────────────────
+                const AuthFieldLabel('Email Address'),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autocorrect: false,
                   decoration: const InputDecoration(
                     hintText: 'you@campus.edu',
                     prefixIcon: Icon(Icons.email_outlined,
-                        color: AppTheme.textSecondary),
+                        color: AppTheme.textTertiary),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter your email';
-                    }
-                    if (!value.contains('@')) return 'Enter a valid email';
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Enter your email';
+                    if (!v.contains('@')) return 'Enter a valid email';
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppTheme.spacingMd),
 
-                // ── Password ───────────────────────────────────────────────
-                const _FieldLabel('Password'),
+                // ── Password ──────────────────────────────────────────────────
+                const AuthFieldLabel('Password'),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_passwordVisible,
+                  textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     hintText: '••••••••',
                     helperText: 'Min. 8 chars, letters, numbers & symbols',
+                    helperStyle: AppTheme.captionStyle,
                     prefixIcon: const Icon(Icons.lock_outline,
-                        color: AppTheme.textSecondary),
+                        color: AppTheme.textTertiary),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _passwordVisible
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.textTertiary,
+                        size: 20,
                       ),
                       onPressed: () =>
                           setState(() => _passwordVisible = !_passwordVisible),
@@ -179,62 +175,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: _validatePassword,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppTheme.spacingMd),
 
-                // ── Confirm Password ───────────────────────────────────────
-                const _FieldLabel('Confirm Password'),
+                // ── Confirm Password ──────────────────────────────────────────
+                const AuthFieldLabel('Confirm Password'),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: !_confirmPasswordVisible,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) =>
+                      _isLoading ? null : _handleRegister(),
                   decoration: InputDecoration(
                     hintText: '••••••••',
                     prefixIcon: const Icon(Icons.lock_outline,
-                        color: AppTheme.textSecondary),
+                        color: AppTheme.textTertiary),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _confirmPasswordVisible
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.textTertiary,
+                        size: 20,
                       ),
                       onPressed: () => setState(() =>
                           _confirmPasswordVisible = !_confirmPasswordVisible),
                     ),
                   ),
-                  validator: (value) {
-                    if (value != _passwordController.text) {
+                  validator: (v) {
+                    if (v != _passwordController.text) {
                       return 'Passwords do not match';
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 36),
+                const SizedBox(height: AppTheme.spacingXl),
 
-                // ── Create Account Button ──────────────────────────────────
-                SizedBox(
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleRegister,
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Create Account',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w600),
-                          ),
-                  ),
+                // ── Create Account Button ─────────────────────────────────────
+                AuthPrimaryButton(
+                  label: 'Create Account',
+                  isLoading: _isLoading,
+                  onPressed: _handleRegister,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppTheme.spacingLg),
 
-                // ── Sign in link ───────────────────────────────────────────
+                // ── Sign in link ──────────────────────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -256,27 +241,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: AppTheme.spacingMd),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: AppTheme.textPrimary,
       ),
     );
   }

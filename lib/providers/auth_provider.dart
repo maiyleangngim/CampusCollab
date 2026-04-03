@@ -1,37 +1,52 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
 class AppAuthProvider extends ChangeNotifier {
   final AuthService _auth = AuthService();
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   User? _user;
   bool _isLoading = false;
   String? _error;
+  bool _emailVerifiedInFirestore = false;
 
   User? get user => _user;
   bool get isLoggedIn => _user != null;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// True only for anonymous or email-verified users.
+  /// True for anonymous users, or email/password users whose Firestore
+  /// `emailVerified` field is true (set by OtpService after code verification).
   bool get isEmailVerified =>
-      _user == null ? false : (_user!.isAnonymous || _user!.emailVerified);
+      _user == null ? false : (_user!.isAnonymous || _emailVerifiedInFirestore);
 
-  /// Reload the Firebase user object (checks latest emailVerified status).
-  Future<void> reloadUser() async {
-    await _auth.currentUser?.reload();
-    _user = _auth.currentUser;
+  /// Re-reads the `emailVerified` flag from Firestore.
+  /// Call this right after a successful OTP verification.
+  Future<void> refreshEmailVerified() async {
+    if (_user == null || _user!.isAnonymous) return;
+    try {
+      final doc = await _db.collection('users').doc(_user!.uid).get();
+      _emailVerifiedInFirestore = doc.data()?['emailVerified'] == true;
+    } catch (_) {}
     notifyListeners();
   }
 
-  Future<void> sendVerificationEmail() async {
-    await _auth.currentUser?.sendEmailVerification();
-  }
-
   AppAuthProvider() {
-    _auth.authStateChanges.listen((user) {
+    _auth.authStateChanges.listen((user) async {
       _user = user;
+      if (user != null && !user.isAnonymous) {
+        try {
+          final doc =
+              await _db.collection('users').doc(user.uid).get();
+          _emailVerifiedInFirestore = doc.data()?['emailVerified'] == true;
+        } catch (_) {
+          _emailVerifiedInFirestore = false;
+        }
+      } else {
+        _emailVerifiedInFirestore = false;
+      }
       notifyListeners();
     });
   }

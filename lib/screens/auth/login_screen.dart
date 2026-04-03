@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import '../../constants/app_routes.dart';
 import '../../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import 'auth_widgets.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,9 +52,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       _navigateAfter(true);
     } else if (auth.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(auth.error!)));
       auth.clearError();
     }
   }
@@ -66,9 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       _navigateAfter(true);
     } else if (auth.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(auth.error!)));
       auth.clearError();
     }
   }
@@ -82,9 +82,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       _navigateAfter(true);
     } else if (auth.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.error!), behavior: SnackBarBehavior.floating),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(auth.error!)));
       auth.clearError();
     }
   }
@@ -95,163 +94,127 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spacingLg, vertical: AppTheme.spacingXl),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Logo ───────────────────────────────────────────────────
-                Center(
-                  child: Column(
-                    children: [
-                      Image.asset('assets/images/logo.png', width: 72),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'CampusCollab',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primary,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 40),
+                // ── Logo ──────────────────────────────────────────────────────
+                const AuthLogoHeader(),
+                const SizedBox(height: AppTheme.spacingXl + 8),
 
-                // ── Heading ────────────────────────────────────────────────
-                const Text(
-                  'Welcome back',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
+                // ── Heading ───────────────────────────────────────────────────
+                const Text('Welcome back', style: AppTheme.headingStyle),
                 const SizedBox(height: 6),
                 const Text(
                   'Sign in to continue collaborating.',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textSecondary,
-                  ),
+                      fontSize: 15,
+                      color: AppTheme.textSecondary,
+                      height: 1.5),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppTheme.spacingXl),
 
-                // ── Email ──────────────────────────────────────────────────
-                const _FieldLabel('Email Address'),
+                // ── Email ─────────────────────────────────────────────────────
+                const AuthFieldLabel('Email Address'),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autocorrect: false,
                   decoration: const InputDecoration(
                     hintText: 'you@campus.edu',
                     prefixIcon: Icon(Icons.email_outlined,
-                        color: AppTheme.textSecondary),
+                        color: AppTheme.textTertiary),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter your email';
-                    }
-                    if (!value.contains('@')) return 'Enter a valid email';
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Enter your email';
+                    if (!v.contains('@')) return 'Enter a valid email';
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppTheme.spacingMd),
 
-                // ── Password ───────────────────────────────────────────────
-                const _FieldLabel('Password'),
+                // ── Password ──────────────────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const AuthFieldLabel('Password'),
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ForgotPasswordScreen()),
+                      ),
+                      child: const Text(
+                        'Forgot password?',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.primaryLight,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_passwordVisible,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _isLoading ? null : _handleLogin(),
                   decoration: InputDecoration(
                     hintText: '••••••••',
                     prefixIcon: const Icon(Icons.lock_outline,
-                        color: AppTheme.textSecondary),
+                        color: AppTheme.textTertiary),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _passwordVisible
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.textTertiary,
+                        size: 20,
                       ),
                       onPressed: () =>
                           setState(() => _passwordVisible = !_passwordVisible),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter your password';
-                    }
-                    if (value.length < 8) {
-                      return 'Must be at least 8 characters';
-                    }
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Enter your password';
+                    if (v.length < 8) return 'Must be at least 8 characters';
                     return null;
                   },
                 ),
-                const SizedBox(height: 36),
+                const SizedBox(height: AppTheme.spacingXl),
 
-                // ── Sign In Button ─────────────────────────────────────────
-                SizedBox(
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Sign In',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w600),
-                          ),
-                  ),
+                // ── Sign In Button ────────────────────────────────────────────
+                AuthPrimaryButton(
+                  label: 'Sign In',
+                  isLoading: _isLoading,
+                  onPressed: _handleLogin,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppTheme.spacingLg),
 
-                // ── Divider ────────────────────────────────────────────────
-                const Row(
-                  children: [
-                    Expanded(child: Divider(color: AppTheme.divider)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        'or continue with',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: AppTheme.divider)),
-                  ],
-                ),
-                const SizedBox(height: 20),
+                // ── Divider ───────────────────────────────────────────────────
+                const AuthOrDivider(),
+                const SizedBox(height: AppTheme.spacingLg),
 
-                // ── Social Buttons ─────────────────────────────────────────
+                // ── Social buttons ────────────────────────────────────────────
                 _SocialButton(
                   label: 'Continue with Google',
                   icon: Icons.g_mobiledata_rounded,
                   iconColor: const Color(0xFFEA4335),
                   onTap: _isLoading ? null : _handleGoogle,
                 ),
-                const SizedBox(height: 16),
-
-                // ── Debug Button ───────────────────────────────────────────
+                const SizedBox(height: AppTheme.spacingMd),
                 _DebugLoginButton(
-                  onTap: _isLoading ? null : _handleDebugLogin,
-                ),
-                const SizedBox(height: 24),
+                    onTap: _isLoading ? null : _handleDebugLogin),
+                const SizedBox(height: AppTheme.spacingLg),
 
-                // ── Register link ──────────────────────────────────────────
+                // ── Register link ─────────────────────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -274,6 +237,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: AppTheme.spacingMd),
               ],
             ),
           ),
@@ -283,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// ── Social Sign-In Button ──────────────────────────────────────────────────────
+// ── Login-specific widgets ─────────────────────────────────────────────────────
 
 class _SocialButton extends StatelessWidget {
   final String label;
@@ -303,16 +267,17 @@ class _SocialButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 48,
+        height: 50,
         decoration: BoxDecoration(
           color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.divider),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: Border.all(color: AppTheme.border, width: 1.5),
+          boxShadow: AppTheme.shadowXs,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: iconColor, size: 24),
+            Icon(icon, color: iconColor, size: 22),
             const SizedBox(width: 8),
             Text(
               label,
@@ -329,8 +294,6 @@ class _SocialButton extends StatelessWidget {
   }
 }
 
-// ── Debug Login Button ─────────────────────────────────────────────────────────
-
 class _DebugLoginButton extends StatelessWidget {
   final VoidCallback? onTap;
   const _DebugLoginButton({required this.onTap});
@@ -340,46 +303,28 @@ class _DebugLoginButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 44,
+        height: 46,
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF8E1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFFD54F)),
+          color: AppTheme.warningLight,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: Border.all(
+              color: AppTheme.warning.withValues(alpha: 0.4), width: 1),
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.bug_report_outlined, color: Color(0xFFF57F17), size: 20),
+            Icon(Icons.bug_report_outlined, color: AppTheme.warning, size: 18),
             SizedBox(width: 8),
             Text(
               'Debug: Skip Login',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFFF57F17),
+                color: AppTheme.warning,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ── Field Label ────────────────────────────────────────────────────────────────
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: AppTheme.textPrimary,
       ),
     );
   }
