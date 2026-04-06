@@ -12,10 +12,10 @@ import 'package:http/http.dart' as http;
 ///   4. Replace the four constants below with your credentials.
 class EmailService {
   // ── Configuration ───────────────────────────────────────────────────────────
-  static const _publicKey    = 'hbGDMWJqn6xiA0lWL';
-  static const _serviceId    = 'service_123m6c2';
-  static const _verifyTplId  = 'template_ysoxi8d';
-  static const _resetTplId   = 'template_0syd9he';
+  static const _publicKey    = 'REPLACE_WITH_EMAILJS_PUBLIC_KEY';
+  static const _serviceId    = 'REPLACE_WITH_EMAILJS_SERVICE_ID';
+  static const _verifyTplId  = 'REPLACE_WITH_VERIFY_TEMPLATE_ID';
+  static const _resetTplId   = 'REPLACE_WITH_RESET_TEMPLATE_ID';
   // ────────────────────────────────────────────────────────────────────────────
 
   static const _endpoint =
@@ -95,6 +95,12 @@ class EmailService {
     required String templateId,
     required Map<String, String> params,
   }) async {
+    if (_publicKey.startsWith('REPLACE_') || _serviceId.startsWith('REPLACE_')) {
+      throw Exception(
+        'EmailJS credentials are not configured. Update constants in lib/services/email_service.dart before sending emails.',
+      );
+    }
+
     final recipient = (params['to_email'] ?? params['email'] ?? '').trim();
     if (recipient.isEmpty) {
       throw Exception('Cannot send OTP email: recipient address is empty.');

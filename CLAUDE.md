@@ -151,6 +151,9 @@ Fill in four constants in `lib/services/email_service.dart`:
 - **Never force-push** to `main`.
 - **Branch naming**: feature/*, fix/*, chore/* — current branch: `Yubendh`.
 - **Commit messages**: concise imperative ("add OTP email verification"), no trailing summaries.
+- **Handoff logging (mandatory, project-wide)**:
+  - Every code/config/workflow change must be appended to `claude_handoff.md` with enough detail to continue the session later.
+  - Any major product/process/rule change must also be written into `CLAUDE.md`.
 
 ---
 

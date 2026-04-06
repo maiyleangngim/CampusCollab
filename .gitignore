@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local handoff and private config
+claude_handoff.md
+.env
+.env.*
+*.keystore
+*.jks
+android/key.properties
+ios/Runner/GoogleService-Info.plist
