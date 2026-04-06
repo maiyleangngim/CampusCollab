@@ -292,16 +292,93 @@ class FirestoreService {
             snap.docs.map((d) => Task.fromFirestore(d.id, d.data())).toList());
   }
 
-  Future<void> addTask(String groupId, String title) async {
-    await _db
-        .collection('studyGroups')
-        .doc(groupId)
-        .collection('tasks')
-        .add({
+  Future<void> addTask(
+    String groupId, {
+    required String title,
+    String? description,
+    String? priority,
+    DateTime? dueDate,
+  }) async {
+    final data = <String, dynamic>{
       'title': title,
       'isCompleted': false,
       'createdBy': _uid,
       'createdAt': FieldValue.serverTimestamp(),
+    };
+    if (description != null && description.isNotEmpty) data['description'] = description;
+    if (priority != null) data['priority'] = priority;
+    if (dueDate != null) data['dueDate'] = Timestamp.fromDate(dueDate);
+    await _db.collection('studyGroups').doc(groupId).collection('tasks').add(data);
+  }
+
+  Future<void> updateTask(
+    String groupId,
+    String taskId, {
+    String? title,
+    String? description,
+    bool clearDescription = false,
+    String? priority,
+    bool clearPriority = false,
+    DateTime? dueDate,
+    bool clearDueDate = false,
+  }) async {
+    final data = <String, dynamic>{};
+    if (title != null) data['title'] = title;
+    if (clearDescription) {
+      data['description'] = FieldValue.delete();
+    } else if (description != null) {
+      data['description'] = description;
+    }
+    if (clearPriority) {
+      data['priority'] = FieldValue.delete();
+    } else if (priority != null) {
+      data['priority'] = priority;
+    }
+    if (clearDueDate) {
+      data['dueDate'] = FieldValue.delete();
+    } else if (dueDate != null) {
+      data['dueDate'] = Timestamp.fromDate(dueDate);
+    }
+    if (data.isEmpty) return;
+    await _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('tasks')
+        .doc(taskId)
+        .update(data);
+  }
+
+  /// Stream of all tasks across every group the current user belongs to.
+  /// Each task has [groupId] and [groupName] injected for cross-group display.
+  Stream<List<Task>> myTasksStream() {
+    return _db
+        .collection('studyGroups')
+        .where('memberIds', arrayContains: _uid)
+        .snapshots()
+        .asyncMap((groupSnap) async {
+      final tasks = <Task>[];
+      for (final groupDoc in groupSnap.docs) {
+        final groupName = groupDoc.data()['name'] as String? ?? '';
+        final taskSnap = await _db
+            .collection('studyGroups')
+            .doc(groupDoc.id)
+            .collection('tasks')
+            .get();
+        for (final taskDoc in taskSnap.docs) {
+          final data = Map<String, dynamic>.from(taskDoc.data());
+          data['groupId'] = groupDoc.id;
+          data['groupName'] = groupName;
+          tasks.add(Task.fromFirestore(taskDoc.id, data));
+        }
+      }
+      // Tasks with deadlines first (sorted by deadline), then no-deadline tasks
+      tasks.sort((a, b) {
+        if (a.dueDate == null && b.dueDate == null) return 0;
+        if (a.dueDate == null) return 1;
+        if (b.dueDate == null) return -1;
+        return a.dueDate!.compareTo(b.dueDate!);
+      });
+      return tasks;
     });
   }
 
