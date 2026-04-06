@@ -289,3 +289,25 @@ You've hit your limit · resets 7pm (Asia/Bangkok)
 - Status:
   - Link-click warning implementation compiles cleanly in analyzed chat files.
 
+### Git operations performed for user request: "push this to Yubendh branch"
+- Checked branch and status:
+  - Confirmed current branch: `Yubendh`
+  - Confirmed modified files include chat/link and dependency updates
+- Created commit:
+  - Commit hash: `8c2b49f`
+  - Commit message: `add chat link warning and attachment sharing`
+  - Files included in commit:
+    - `lib/models/message.dart`
+    - `lib/screens/chats/chat_detail_screen.dart`
+    - `lib/services/firestore_service.dart`
+    - `lib/services/storage_service.dart`
+    - `lib/widgets/chat_input_bar.dart`
+    - `lib/widgets/message_bubble.dart`
+    - `pubspec.yaml`
+    - `pubspec.lock`
+    - `macos/Flutter/GeneratedPluginRegistrant.swift`
+    - `claude_handoff.md`
+- Pushed to remote:
+  - `origin/Yubendh`
+  - Remote result: `f227cde..8c2b49f  Yubendh -> Yubendh`
+
