@@ -44,11 +44,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Local handoff and private config
+# Local handoff (developer-specific, never shared)
 claude_handoff.md
-.env
-.env.*
-*.keystore
-*.jks
-android/key.properties
-ios/Runner/GoogleService-Info.plist
+claude_handoff.local.md
