@@ -1,91 +1,118 @@
 # CampusCollab
 
-A Flutter study-group messaging app for university students.
+CampusCollab is a Flutter + Firebase campus collaboration app focused on study groups, real-time chat, shared tasks, calendar planning, and productivity tools.
 
-> **Current phase:** UI/UX prototype — all screens use dummy data. No backend connected yet.
+## Current Status
 
----
+This project is no longer a UI-only prototype.
 
-## Project Structure
+- Firebase Authentication is integrated (email/password, Google, anonymous).
+- Firestore powers groups, chat, folders, tasks, resources, sessions, and user profile data.
+- OTP verification and password-reset OTP flows are implemented.
+- Calendar integrates both study sessions and group task deadlines.
+- Chat supports edit/delete/reactions and attachment/link workflows.
+
+## Implemented Features
+
+- Auth flows:
+    - Register + OTP email verification
+    - Login (email/password, Google, anonymous)
+    - Forgot password + OTP identity verification + Firebase reset link flow
+- Study groups:
+    - Create, join (including invite code), leave
+    - Owner/moderator role controls
+    - Member management and role assignment
+- Group chat:
+    - Real-time messages
+    - Edit and delete (with role permissions)
+    - Emoji reactions
+    - Image and file attachments via Firebase Storage
+    - Link embeds (including YouTube previews)
+- Tasks:
+    - Advanced task fields (description, priority, optional deadline)
+    - Task editing and status tracking
+    - Cross-group deadline visibility in Calendar
+- Other modules:
+    - Resource Vault
+    - Pomodoro screen
+    - Profile and settings (theme persistence)
+
+## Tech Stack
+
+- Flutter (Dart)
+- Firebase Core / Auth / Firestore / Storage
+- Provider for app state
+- SharedPreferences for local settings
+- URL Launcher, Image Picker, File Picker, QR, Share utilities
+
+## Project Layout (High Level)
 
 ```
 lib/
-├── main.dart                        # App entry point & route registration
-│
-├── theme/
-│   └── app_theme.dart               # Colors, text styles & MaterialTheme
-│
-├── constants/
-│   └── app_routes.dart              # Named route strings ('/login', '/home', …)
-│
-├── models/                          # Plain Dart data classes
-│   ├── user.dart
-│   ├── message.dart
-│   └── study_group.dart
-│
-├── data/
-│   └── dummy_data.dart              # Hardcoded fake data for prototyping
-│
-├── screens/
-│   ├── auth/
-│   │   └── login_screen.dart
-│   ├── home/
-│   │   └── home_screen.dart
-│   ├── chats/
-│   │   ├── chats_screen.dart
-│   │   └── chat_detail_screen.dart
-│   └── profile/
-│       └── profile_screen.dart
-│
-└── widgets/                         # Reusable UI components
-    ├── group_chat_card.dart
-    ├── message_bubble.dart
-    └── chat_input_bar.dart
+    constants/
+    models/
+    providers/
+    screens/
+        auth/
+        calendar/
+        chats/
+        discover/
+        groups/
+        home/
+        profile/
+        resources/
+        study/
+        tasks/
+    services/
+    theme/
+    widgets/
 ```
 
----
+For the full repository conventions and architecture notes, see `CLAUDE.md`.
 
-## Navigation
+## Setup
 
-All routes are defined in `constants/app_routes.dart` and registered in `main.dart`.
+### 1. Prerequisites
 
-```dart
-Navigator.pushNamed(context, AppRoutes.home);
-Navigator.pushReplacementNamed(context, AppRoutes.home);
-Navigator.pushNamed(context, AppRoutes.chat, arguments: group);
+- Flutter SDK installed
+- A Firebase project configured
+- Android Studio / VS Code toolchain
+
+### 2. Install dependencies
+
+```bash
+flutter pub get
 ```
 
-| Constant | Screen |
-|----------|--------|
-| `AppRoutes.login` | Login |
-| `AppRoutes.home` | Home |
-| `AppRoutes.chats` | Group chat list |
-| `AppRoutes.chat` | Individual chat (requires `StudyGroup` argument) |
-| `AppRoutes.profile` | User profile |
+### 3. Configure Firebase
 
----
+- Place your Android Firebase config at `android/app/google-services.json`.
+- Configure `lib/firebase_options.dart` with your actual Firebase values.
+- If adding iOS, include `GoogleService-Info.plist` in the iOS Runner project.
 
-## Theme
+### 4. Configure EmailJS (for OTP emails)
 
-Use `AppTheme` constants instead of hardcoding colors or sizes.
+Update these constants in `lib/services/email_service.dart`:
 
-```dart
-import '../../theme/app_theme.dart';
+- `_publicKey`
+- `_serviceId`
+- `_verifyTplId`
+- `_resetTplId`
 
-AppTheme.primary        // deep blue
-AppTheme.primaryLight   // medium blue
-AppTheme.background     // page background
-AppTheme.surface        // white
-AppTheme.headingStyle   // 22px bold
-AppTheme.titleStyle     // 16px semibold
-AppTheme.bodyStyle      // 14px regular
-AppTheme.captionStyle   // 12px grey
+### 5. Run
+
+```bash
+flutter run
 ```
 
----
+## Security Notes
 
-## Tips
+- Do not commit real API keys, service IDs, or private credentials.
+- Keep local handoff notes and secret-bearing local files out of commits via `.gitignore`.
+- If secrets were ever committed in history, rotate them immediately.
 
-- To skip login during development, change `initialRoute` to `AppRoutes.home` in `main.dart`.
-- Hot reload: `r` — Hot restart: `R`
-- Dummy data is in `data/dummy_data.dart` — edit freely to test UI states.
+## Development Notes
+
+- The repository includes both production-backed screens and some legacy placeholders.
+- `lib/data/dummy_data.dart` is legacy-only and should not be used for new production features.
+- Route constants live in `lib/constants/app_routes.dart`.
