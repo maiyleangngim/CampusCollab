@@ -22,4 +22,16 @@ class StorageService {
     await ref.putFile(file);
     return ref.getDownloadURL();
   }
+
+  /// Upload a generic chat file and return the download URL.
+  Future<String> uploadChatFile(String groupId, File file) async {
+    final fileName = file.path.split(Platform.pathSeparator).last;
+    final dot = fileName.lastIndexOf('.');
+    final ext = dot >= 0 ? fileName.substring(dot) : '';
+    final safeExt = ext.isEmpty ? '' : ext;
+    final name = '${DateTime.now().millisecondsSinceEpoch}$safeExt';
+    final ref = _storage.ref().child('chat_files/$groupId/$name');
+    await ref.putFile(file);
+    return ref.getDownloadURL();
+  }
 }

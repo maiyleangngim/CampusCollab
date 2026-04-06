@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../constants/app_routes.dart';
 import '../../models/study_group.dart';
 import '../../models/message.dart';
@@ -21,10 +22,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final FirestoreService _firestore = FirestoreService();
   final StorageService _storage = StorageService();
   final ScrollController _scrollCtrl = ScrollController();
+  final TextEditingController _editCtrl = TextEditingController();
+
+  Message? _editingMessage;
+
+  String get _myRole {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    return widget.group.memberRoles[uid] ?? 'member';
+  }
 
   @override
   void dispose() {
     _scrollCtrl.dispose();
+    _editCtrl.dispose();
     super.dispose();
   }
 
@@ -38,6 +48,29 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         );
       }
     });
+  }
+
+  void _startEdit(Message message) {
+    setState(() {
+      _editingMessage = message;
+      _editCtrl.text = message.text ?? '';
+      _editCtrl.selection = TextSelection.collapsed(offset: _editCtrl.text.length);
+    });
+  }
+
+  void _cancelEdit() {
+    setState(() {
+      _editingMessage = null;
+      _editCtrl.clear();
+    });
+  }
+
+  Future<void> _saveEdit() async {
+    final msg = _editingMessage;
+    final text = _editCtrl.text.trim();
+    if (msg == null || text.isEmpty) return;
+    _cancelEdit();
+    await _firestore.editMessage(widget.group.id, msg.id, text);
   }
 
   Future<void> _sendText(String text) async {
@@ -56,6 +89,31 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           SnackBar(
               content: Text('Failed to send image: $e'),
               behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendFile(File file) async {
+    try {
+      final url = await _storage.uploadChatFile(widget.group.id, file);
+      final fileName = file.path.split(Platform.pathSeparator).last;
+      final sizeBytes = await file.length();
+      final sizeKb = (sizeBytes / 1024).toStringAsFixed(1);
+      await _firestore.sendFileMessage(
+        widget.group.id,
+        fileUrl: url,
+        fileName: fileName,
+        fileSubtitle: '$sizeKb KB',
+      );
+      _scrollToBottom();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send file: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
@@ -211,18 +269,123 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   controller: _scrollCtrl,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   itemCount: messages.length,
-                  itemBuilder: (context, index) =>
-                      MessageBubble(message: messages[index]),
+                  itemBuilder: (context, index) => MessageBubble(
+                    message: messages[index],
+                    groupId: widget.group.id,
+                    myRole: _myRole,
+                    onEditRequest: _startEdit,
+                  ),
                 );
               },
             ),
           ),
           const Divider(height: 1, color: AppTheme.divider),
-          ChatInputBar(
-            onSend: _sendText,
-            onImagePick: _sendImage,
-          ),
+          if (_editingMessage != null)
+            _EditBar(
+              controller: _editCtrl,
+              onSave: _saveEdit,
+              onCancel: _cancelEdit,
+            )
+          else
+            ChatInputBar(
+              onSend: _sendText,
+              onImagePick: _sendImage,
+              onFilePick: _sendFile,
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _EditBar extends StatelessWidget {
+  final TextEditingController controller;
+  final Future<void> Function() onSave;
+  final VoidCallback onCancel;
+
+  const _EditBar({
+    required this.controller,
+    required this.onSave,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      color: cs.surface,
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // "Editing" banner
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              color: AppTheme.primary.withValues(alpha: 0.08),
+              child: Row(
+                children: [
+                  Icon(Icons.edit_outlined, size: 14, color: AppTheme.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Editing message',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: onCancel,
+                    child: Icon(Icons.close, size: 18, color: cs.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            // Text field row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: cs.outlineVariant),
+                      ),
+                      child: TextField(
+                        controller: controller,
+                        maxLines: null,
+                        autofocus: true,
+                        decoration: InputDecoration.collapsed(
+                          hintText: 'Edit message...',
+                          hintStyle:
+                              TextStyle(color: cs.onSurfaceVariant),
+                        ),
+                        style:
+                            TextStyle(fontSize: 15, color: cs.onSurface),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.check,
+                          color: Colors.white, size: 20),
+                      onPressed: onSave,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -7,10 +7,13 @@ class Message {
   final MessageType type;
   final String? text;
   final String? imageUrl;
+  final String? fileUrl;
   final String? fileName;
   final String? fileSubtitle;
   final DateTime timestamp;
   final bool isMe;
+  final bool isEdited;
+  final Map<String, List<String>> reactions; // emoji -> list of UIDs
 
   const Message({
     required this.id,
@@ -21,7 +24,10 @@ class Message {
     required this.isMe,
     this.text,
     this.imageUrl,
+    this.fileUrl,
     this.fileName,
     this.fileSubtitle,
+    this.isEdited = false,
+    this.reactions = const {},
   });
 }

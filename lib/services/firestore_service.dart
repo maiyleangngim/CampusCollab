@@ -263,11 +263,80 @@ class FirestoreService {
                 type: _parseType(data['type']),
                 text: data['content'],
                 imageUrl: data['imageUrl'],
+                fileUrl: data['fileUrl'],
                 fileName: data['fileName'],
+                fileSubtitle: data['fileSubtitle'],
                 timestamp: ts is Timestamp ? ts.toDate() : DateTime.now(),
                 isMe: data['senderId'] == _uid,
+                isEdited: data['isEdited'] as bool? ?? false,
+                reactions: _parseReactions(data['reactions']),
               );
             }).toList());
+  }
+
+  Map<String, List<String>> _parseReactions(dynamic raw) {
+    if (raw == null) return {};
+    final map = raw as Map<String, dynamic>;
+    return map.map((k, v) => MapEntry(k, List<String>.from(v as List)));
+  }
+
+  Future<void> deleteMessage(String groupId, String messageId) {
+    return _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('messages')
+        .doc(messageId)
+        .delete();
+  }
+
+  Future<void> editMessage(
+      String groupId, String messageId, String newText) async {
+    await _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('messages')
+        .doc(messageId)
+        .update({'content': newText, 'isEdited': true});
+
+    // Update the group preview if this was the latest message
+    final latest = await _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .get();
+    if (latest.docs.isNotEmpty && latest.docs.first.id == messageId) {
+      await _db
+          .collection('studyGroups')
+          .doc(groupId)
+          .update({'lastMessage': newText});
+    }
+  }
+
+  Future<void> toggleReaction(
+      String groupId, String messageId, String emoji) async {
+    final uid = _uid;
+    final ref = _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('messages')
+        .doc(messageId);
+    final doc = await ref.get();
+    final rawReactions =
+        Map<String, dynamic>.from(doc.data()?['reactions'] as Map? ?? {});
+    final uids = List<String>.from(rawReactions[emoji] as List? ?? []);
+    if (uids.contains(uid)) {
+      uids.remove(uid);
+    } else {
+      uids.add(uid);
+    }
+    if (uids.isEmpty) {
+      rawReactions.remove(emoji);
+    } else {
+      rawReactions[emoji] = uids;
+    }
+    await ref.update({'reactions': rawReactions});
   }
 
   Future<void> sendTextMessage(String groupId, String text) async {
@@ -314,6 +383,38 @@ class FirestoreService {
     });
     batch.update(_db.collection('studyGroups').doc(groupId), {
       'lastMessage': '📷 Image',
+      'lastMessageTime': FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
+  }
+
+  Future<void> sendFileMessage(
+    String groupId, {
+    required String fileUrl,
+    required String fileName,
+    String? fileSubtitle,
+  }) async {
+    final user = _auth.currentUser!;
+    final userDoc = await _db.collection('users').doc(user.uid).get();
+    final name = userDoc.data()?['displayName'] ?? 'Unknown';
+    final batch = _db.batch();
+    final msgRef = _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('messages')
+        .doc();
+    batch.set(msgRef, {
+      'senderId': user.uid,
+      'senderName': name,
+      'type': 'file',
+      'fileUrl': fileUrl,
+      'fileName': fileName,
+      if (fileSubtitle != null && fileSubtitle.isNotEmpty)
+        'fileSubtitle': fileSubtitle,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    batch.update(_db.collection('studyGroups').doc(groupId), {
+      'lastMessage': '📎 $fileName',
       'lastMessageTime': FieldValue.serverTimestamp(),
     });
     await batch.commit();
