@@ -57,6 +57,9 @@ dependencies:
   # URL launching
   url_launcher: ^6.3.0
 
+  # File picking (for chat file attachments)
+  file_picker: ^8.1.2
+
   # HTTP client (EmailJS API)
   http: ^1.2.0
 

@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../constants/app_routes.dart';
 import '../../models/study_group.dart';
 import '../../models/study_session.dart';
+import '../../models/task.dart';
 import '../../services/firestore_service.dart';
 import '../../theme/app_theme.dart';
 
@@ -163,125 +164,231 @@ class _CalendarTabState extends State<_CalendarTab> {
   Widget build(BuildContext context) {
     return StreamBuilder<List<StudySession>>(
       stream: _firestore.mySessionsStream(),
-      builder: (context, snapshot) {
-        final sessions = snapshot.data ?? [];
-        final sessionDayColors = _buildSessionDayColors(sessions);
-        final sessionDays = sessionDayColors.keys.toSet();
+      builder: (context, sessionSnap) {
+        return StreamBuilder<List<Task>>(
+          stream: _firestore.myTasksStream(),
+          builder: (context, taskSnap) {
+            final sessions = sessionSnap.data ?? [];
+            final allTasks = taskSnap.data ?? [];
 
-        final selectedSessions = _selectedDay == null
-            ? <StudySession>[]
-            : sessions
-                .where((s) =>
-                    s.startTime.year == _selectedDay!.year &&
-                    s.startTime.month == _selectedDay!.month &&
-                    s.startTime.day == _selectedDay!.day)
+            final sessionDayColors = _buildSessionDayColors(sessions);
+            final sessionDays = sessionDayColors.keys.toSet();
+            final taskDeadlineDays = _buildTaskDeadlineDays(allTasks);
+
+            final selectedSessions = _selectedDay == null
+                ? <StudySession>[]
+                : sessions
+                    .where((s) =>
+                        s.startTime.year == _selectedDay!.year &&
+                        s.startTime.month == _selectedDay!.month &&
+                        s.startTime.day == _selectedDay!.day)
+                    .toList();
+
+            final selectedTasks = _selectedDay == null
+                ? <Task>[]
+                : allTasks
+                    .where((t) =>
+                        t.dueDate != null &&
+                        t.dueDate!.year == _selectedDay!.year &&
+                        t.dueDate!.month == _selectedDay!.month &&
+                        t.dueDate!.day == _selectedDay!.day)
+                    .toList();
+
+            final now = DateTime.now();
+            final upcomingSessions = sessions
+                .where((s) => s.startTime.isAfter(now))
+                .toList()
+              ..sort((a, b) => a.startTime.compareTo(b.startTime));
+
+            final upcomingTasks = allTasks
+                .where((t) =>
+                    t.dueDate != null &&
+                    !t.isCompleted &&
+                    t.dueDate!.isAfter(now.subtract(const Duration(days: 1))))
                 .toList();
 
-        final now = DateTime.now();
-        final upcomingSessions = sessions
-            .where((s) => s.startTime.isAfter(now))
-            .toList()
-          ..sort((a, b) => a.startTime.compareTo(b.startTime));
+            final hasSelectedItems =
+                selectedSessions.isNotEmpty || selectedTasks.isNotEmpty;
 
-        return Stack(
-          children: [
-            ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            return Stack(
               children: [
-                // ── Calendar Card ─────────────────────────────────────────
-                Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
+                ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                  children: [
+                    // ── Calendar Card ───────────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      _MonthHeader(
-                          month: _focusedMonth,
-                          onPrev: _prevMonth,
-                          onNext: _nextMonth),
-                      const SizedBox(height: 12),
-                      _WeekdayRow(),
-                      const SizedBox(height: 4),
-                      _DayGrid(
-                        focusedMonth: _focusedMonth,
-                        selectedDay: _selectedDay,
-                        sessionDays: sessionDays,
-                        sessionColors: sessionDayColors,
-                        onDayTap: (day) => setState(() => _selectedDay = day),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          _MonthHeader(
+                              month: _focusedMonth,
+                              onPrev: _prevMonth,
+                              onNext: _nextMonth),
+                          const SizedBox(height: 12),
+                          _WeekdayRow(),
+                          const SizedBox(height: 4),
+                          _DayGrid(
+                            focusedMonth: _focusedMonth,
+                            selectedDay: _selectedDay,
+                            sessionDays: sessionDays,
+                            sessionColors: sessionDayColors,
+                            taskDeadlineDays: taskDeadlineDays,
+                            onDayTap: (day) =>
+                                setState(() => _selectedDay = day),
+                          ),
+                          const SizedBox(height: 8),
+                          // Legend
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: const BoxDecoration(
+                                      color: AppTheme.primary,
+                                      shape: BoxShape.circle)),
+                              const SizedBox(width: 4),
+                              Text('Sessions',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant)),
+                              const SizedBox(width: 14),
+                              Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: const BoxDecoration(
+                                      color: AppTheme.warning,
+                                      shape: BoxShape.circle)),
+                              const SizedBox(width: 4),
+                              Text('Task deadlines',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant)),
+                            ],
+                          ),
+                        ],
                       ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // ── Selected Day ────────────────────────────────────
+                    if (hasSelectedItems) ...[
+                      Text(
+                        _formatDate(_selectedDay!),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...selectedSessions
+                          .map((s) => _SessionTile(session: s)),
+                      ...selectedTasks
+                          .map((t) => _CalendarTaskTile(task: t)),
+                      const SizedBox(height: 16),
                     ],
-                  ),
+
+                    // ── Upcoming Sessions ───────────────────────────────
+                    Text('Upcoming Sessions',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        )),
+                    const SizedBox(height: 12),
+
+                    if (sessionSnap.connectionState ==
+                        ConnectionState.waiting)
+                      const Center(child: CircularProgressIndicator())
+                    else if (upcomingSessions.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'No upcoming sessions.\nSchedule one with the + button!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                                fontSize: 13),
+                          ),
+                        ),
+                      )
+                    else
+                      ...upcomingSessions
+                          .map((s) => _SessionTile(session: s)),
+
+                    const SizedBox(height: 24),
+
+                    // ── Upcoming Task Deadlines ─────────────────────────
+                    Text('Upcoming Task Deadlines',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        )),
+                    const SizedBox(height: 12),
+
+                    if (taskSnap.connectionState == ConnectionState.waiting)
+                      const Center(child: CircularProgressIndicator())
+                    else if (upcomingTasks.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'No tasks with upcoming deadlines.',
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                                fontSize: 13),
+                          ),
+                        ),
+                      )
+                    else
+                      ...upcomingTasks.map((t) => _CalendarTaskTile(task: t)),
+                  ],
                 ),
 
-                const SizedBox(height: 20),
-
-                // ── Selected Day Sessions ─────────────────────────────────
-                if (selectedSessions.isNotEmpty) ...[
-                  Text(
-                    _formatDate(_selectedDay!),
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                // ── FAB ─────────────────────────────────────────────────
+                Positioned(
+                  bottom: 20,
+                  right: 20,
+                  child: FloatingActionButton(
+                    onPressed: () => _showAddSession(context),
+                    backgroundColor: AppTheme.primary,
+                    child: const Icon(Icons.add, color: Colors.white),
                   ),
-                  const SizedBox(height: 8),
-                  ...selectedSessions.map((s) => _SessionTile(session: s)),
-                  const SizedBox(height: 16),
-                ],
-
-                // ── Upcoming Sessions ─────────────────────────────────────
-                Text('Upcoming Sessions',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    )),
-                const SizedBox(height: 12),
-
-                if (snapshot.connectionState == ConnectionState.waiting)
-                  const Center(child: CircularProgressIndicator())
-                else if (upcomingSessions.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'No upcoming sessions.\nSchedule one with the + button!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
-                      ),
-                    ),
-                  )
-                else
-                  ...upcomingSessions.map((s) => _SessionTile(session: s)),
+                ),
               ],
-            ),
-
-            // ── FAB ───────────────────────────────────────────────────────
-            Positioned(
-              bottom: 20,
-              right: 20,
-              child: FloatingActionButton(
-                onPressed: () => _showAddSession(context),
-                backgroundColor: AppTheme.primary,
-                child: Icon(Icons.add, color: Colors.white),
-              ),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -296,6 +403,19 @@ class _CalendarTabState extends State<_CalendarTab> {
       }
     }
     return map;
+  }
+
+  Set<int> _buildTaskDeadlineDays(List<Task> tasks) {
+    final set = <int>{};
+    for (final t in tasks) {
+      if (t.dueDate != null &&
+          t.dueDate!.year == _focusedMonth.year &&
+          t.dueDate!.month == _focusedMonth.month &&
+          !t.isCompleted) {
+        set.add(t.dueDate!.day);
+      }
+    }
+    return set;
   }
 
   String _formatDate(DateTime d) {
@@ -782,6 +902,7 @@ class _DayGrid extends StatelessWidget {
   final DateTime? selectedDay;
   final Set<int> sessionDays;
   final Map<int, Color> sessionColors;
+  final Set<int> taskDeadlineDays;
   final void Function(DateTime) onDayTap;
 
   const _DayGrid({
@@ -789,6 +910,7 @@ class _DayGrid extends StatelessWidget {
     required this.selectedDay,
     required this.sessionDays,
     required this.sessionColors,
+    required this.taskDeadlineDays,
     required this.onDayTap,
   });
 
@@ -815,6 +937,7 @@ class _DayGrid extends StatelessWidget {
           date.month == selectedDay!.month &&
           date.day == selectedDay!.day;
       final hasSession = sessionDays.contains(day);
+      final hasTask = taskDeadlineDays.contains(day);
 
       cells.add(
         GestureDetector(
@@ -849,17 +972,30 @@ class _DayGrid extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              if (hasSession)
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: sessionColors[day] ?? AppTheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                )
-              else
-                const SizedBox(height: 6),
+              SizedBox(
+                height: 6,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (hasSession)
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                            color: AppTheme.primary, shape: BoxShape.circle),
+                      ),
+                    if (hasSession && hasTask) const SizedBox(width: 2),
+                    if (hasTask)
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                            color: AppTheme.warning, shape: BoxShape.circle),
+                      ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -872,6 +1008,158 @@ class _DayGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       childAspectRatio: 0.85,
       children: cells,
+    );
+  }
+}
+
+// =============================================================================
+// CALENDAR TASK TILE
+// =============================================================================
+
+class _CalendarTaskTile extends StatelessWidget {
+  final Task task;
+  const _CalendarTaskTile({required this.task});
+
+  Color _priorityColor(String p) {
+    switch (p) {
+      case 'high':   return AppTheme.error;
+      case 'medium': return AppTheme.warning;
+      default:       return AppTheme.success;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+
+    final now = DateTime.now();
+    final isOverdue = task.dueDate != null &&
+        task.dueDate!.isBefore(now) &&
+        !task.isCompleted;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Date badge
+          Container(
+            width: 48,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.warning.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  task.dueDate != null
+                      ? months[task.dueDate!.month - 1].toUpperCase()
+                      : '—',
+                  style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.warning),
+                ),
+                Text(
+                  task.dueDate != null ? '${task.dueDate!.day}' : '—',
+                  style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.warning),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  task.title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    decoration:
+                        task.isCompleted ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                if (task.groupName != null)
+                  Row(
+                    children: [
+                      Icon(Icons.group_outlined,
+                          size: 13, color: AppTheme.primary),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          task.groupName!,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant),
+                        ),
+                      ),
+                    ],
+                  ),
+                if (task.priority != null) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color:
+                          _priorityColor(task.priority!).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      task.priority![0].toUpperCase() +
+                          task.priority!.substring(1),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: _priorityColor(task.priority!),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          // Overdue / done indicator
+          Container(
+            width: 4,
+            height: 40,
+            decoration: BoxDecoration(
+              color: task.isCompleted
+                  ? AppTheme.success
+                  : isOverdue
+                      ? AppTheme.error
+                      : AppTheme.warning,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

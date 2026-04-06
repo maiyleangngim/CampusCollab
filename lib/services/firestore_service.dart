@@ -198,6 +198,52 @@ class FirestoreService {
     return roles[_uid] ?? 'member';
   }
 
+  /// Fetch a single group document.
+  Future<StudyGroup?> getGroup(String groupId) async {
+    final doc = await _db.collection('studyGroups').doc(groupId).get();
+    if (!doc.exists) return null;
+    final data = doc.data()!..['id'] = doc.id;
+    return StudyGroup.fromFirestore(data);
+  }
+
+  /// Remove a member from a group (owner/admin only — enforced in UI).
+  Future<void> kickMember(String groupId, String targetUid) async {
+    await _db.collection('studyGroups').doc(groupId).update({
+      'memberIds': FieldValue.arrayRemove([targetUid]),
+      'memberCount': FieldValue.increment(-1),
+      'memberRoles.$targetUid': FieldValue.delete(),
+    });
+  }
+
+  /// Set a member's role ('admin' or 'member') — owner only in UI.
+  Future<void> setMemberRole(
+      String groupId, String targetUid, String role) async {
+    await _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .update({'memberRoles.$targetUid': role});
+  }
+
+  /// Update group name/description/courseCode. Pass only the fields to change.
+  Future<void> updateGroupInfo(
+    String groupId, {
+    String? name,
+    String? description,
+    String? courseCode,
+  }) async {
+    final data = <String, dynamic>{};
+    if (name != null) data['name'] = name;
+    if (description != null) data['description'] = description;
+    if (courseCode != null) data['courseCode'] = courseCode;
+    if (data.isEmpty) return;
+    await _db.collection('studyGroups').doc(groupId).update(data);
+  }
+
+  /// Permanently delete a group document (owner only — enforced in UI).
+  Future<void> deleteGroup(String groupId) async {
+    await _db.collection('studyGroups').doc(groupId).delete();
+  }
+
   // ── MESSAGES ────────────────────────────────────────────────────────────────
 
   Stream<List<Message>> messagesStream(String groupId) {
@@ -217,11 +263,80 @@ class FirestoreService {
                 type: _parseType(data['type']),
                 text: data['content'],
                 imageUrl: data['imageUrl'],
+                fileUrl: data['fileUrl'],
                 fileName: data['fileName'],
+                fileSubtitle: data['fileSubtitle'],
                 timestamp: ts is Timestamp ? ts.toDate() : DateTime.now(),
                 isMe: data['senderId'] == _uid,
+                isEdited: data['isEdited'] as bool? ?? false,
+                reactions: _parseReactions(data['reactions']),
               );
             }).toList());
+  }
+
+  Map<String, List<String>> _parseReactions(dynamic raw) {
+    if (raw == null) return {};
+    final map = raw as Map<String, dynamic>;
+    return map.map((k, v) => MapEntry(k, List<String>.from(v as List)));
+  }
+
+  Future<void> deleteMessage(String groupId, String messageId) {
+    return _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('messages')
+        .doc(messageId)
+        .delete();
+  }
+
+  Future<void> editMessage(
+      String groupId, String messageId, String newText) async {
+    await _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('messages')
+        .doc(messageId)
+        .update({'content': newText, 'isEdited': true});
+
+    // Update the group preview if this was the latest message
+    final latest = await _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .get();
+    if (latest.docs.isNotEmpty && latest.docs.first.id == messageId) {
+      await _db
+          .collection('studyGroups')
+          .doc(groupId)
+          .update({'lastMessage': newText});
+    }
+  }
+
+  Future<void> toggleReaction(
+      String groupId, String messageId, String emoji) async {
+    final uid = _uid;
+    final ref = _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('messages')
+        .doc(messageId);
+    final doc = await ref.get();
+    final rawReactions =
+        Map<String, dynamic>.from(doc.data()?['reactions'] as Map? ?? {});
+    final uids = List<String>.from(rawReactions[emoji] as List? ?? []);
+    if (uids.contains(uid)) {
+      uids.remove(uid);
+    } else {
+      uids.add(uid);
+    }
+    if (uids.isEmpty) {
+      rawReactions.remove(emoji);
+    } else {
+      rawReactions[emoji] = uids;
+    }
+    await ref.update({'reactions': rawReactions});
   }
 
   Future<void> sendTextMessage(String groupId, String text) async {
@@ -273,6 +388,38 @@ class FirestoreService {
     await batch.commit();
   }
 
+  Future<void> sendFileMessage(
+    String groupId, {
+    required String fileUrl,
+    required String fileName,
+    String? fileSubtitle,
+  }) async {
+    final user = _auth.currentUser!;
+    final userDoc = await _db.collection('users').doc(user.uid).get();
+    final name = userDoc.data()?['displayName'] ?? 'Unknown';
+    final batch = _db.batch();
+    final msgRef = _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('messages')
+        .doc();
+    batch.set(msgRef, {
+      'senderId': user.uid,
+      'senderName': name,
+      'type': 'file',
+      'fileUrl': fileUrl,
+      'fileName': fileName,
+      if (fileSubtitle != null && fileSubtitle.isNotEmpty)
+        'fileSubtitle': fileSubtitle,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    batch.update(_db.collection('studyGroups').doc(groupId), {
+      'lastMessage': '📎 $fileName',
+      'lastMessageTime': FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
+  }
+
   MessageType _parseType(dynamic raw) {
     if (raw == 'image') return MessageType.image;
     if (raw == 'file') return MessageType.file;
@@ -292,16 +439,93 @@ class FirestoreService {
             snap.docs.map((d) => Task.fromFirestore(d.id, d.data())).toList());
   }
 
-  Future<void> addTask(String groupId, String title) async {
-    await _db
-        .collection('studyGroups')
-        .doc(groupId)
-        .collection('tasks')
-        .add({
+  Future<void> addTask(
+    String groupId, {
+    required String title,
+    String? description,
+    String? priority,
+    DateTime? dueDate,
+  }) async {
+    final data = <String, dynamic>{
       'title': title,
       'isCompleted': false,
       'createdBy': _uid,
       'createdAt': FieldValue.serverTimestamp(),
+    };
+    if (description != null && description.isNotEmpty) data['description'] = description;
+    if (priority != null) data['priority'] = priority;
+    if (dueDate != null) data['dueDate'] = Timestamp.fromDate(dueDate);
+    await _db.collection('studyGroups').doc(groupId).collection('tasks').add(data);
+  }
+
+  Future<void> updateTask(
+    String groupId,
+    String taskId, {
+    String? title,
+    String? description,
+    bool clearDescription = false,
+    String? priority,
+    bool clearPriority = false,
+    DateTime? dueDate,
+    bool clearDueDate = false,
+  }) async {
+    final data = <String, dynamic>{};
+    if (title != null) data['title'] = title;
+    if (clearDescription) {
+      data['description'] = FieldValue.delete();
+    } else if (description != null) {
+      data['description'] = description;
+    }
+    if (clearPriority) {
+      data['priority'] = FieldValue.delete();
+    } else if (priority != null) {
+      data['priority'] = priority;
+    }
+    if (clearDueDate) {
+      data['dueDate'] = FieldValue.delete();
+    } else if (dueDate != null) {
+      data['dueDate'] = Timestamp.fromDate(dueDate);
+    }
+    if (data.isEmpty) return;
+    await _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .collection('tasks')
+        .doc(taskId)
+        .update(data);
+  }
+
+  /// Stream of all tasks across every group the current user belongs to.
+  /// Each task has [groupId] and [groupName] injected for cross-group display.
+  Stream<List<Task>> myTasksStream() {
+    return _db
+        .collection('studyGroups')
+        .where('memberIds', arrayContains: _uid)
+        .snapshots()
+        .asyncMap((groupSnap) async {
+      final tasks = <Task>[];
+      for (final groupDoc in groupSnap.docs) {
+        final groupName = groupDoc.data()['name'] as String? ?? '';
+        final taskSnap = await _db
+            .collection('studyGroups')
+            .doc(groupDoc.id)
+            .collection('tasks')
+            .get();
+        for (final taskDoc in taskSnap.docs) {
+          final data = Map<String, dynamic>.from(taskDoc.data());
+          data['groupId'] = groupDoc.id;
+          data['groupName'] = groupName;
+          tasks.add(Task.fromFirestore(taskDoc.id, data));
+        }
+      }
+      // Tasks with deadlines first (sorted by deadline), then no-deadline tasks
+      tasks.sort((a, b) {
+        if (a.dueDate == null && b.dueDate == null) return 0;
+        if (a.dueDate == null) return 1;
+        if (b.dueDate == null) return -1;
+        return a.dueDate!.compareTo(b.dueDate!);
+      });
+      return tasks;
     });
   }
 

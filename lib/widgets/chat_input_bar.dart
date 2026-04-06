@@ -1,15 +1,18 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ChatInputBar extends StatefulWidget {
   final Future<void> Function(String text) onSend;
   final Future<void> Function(File image)? onImagePick;
+  final Future<void> Function(File file)? onFilePick;
 
   const ChatInputBar({
     super.key,
     required this.onSend,
     this.onImagePick,
+    this.onFilePick,
   });
 
   @override
@@ -84,7 +87,18 @@ class _ChatInputBarState extends State<ChatInputBar> {
                     icon: Icons.insert_drive_file_outlined,
                     label: 'File',
                     color: Colors.orange[700]!,
-                    onTap: () => Navigator.pop(context),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      if (widget.onFilePick == null) return;
+                      final picked = await FilePicker.platform.pickFiles(
+                        allowMultiple: false,
+                        withData: false,
+                      );
+                      final path = picked?.files.single.path;
+                      if (path != null && path.isNotEmpty) {
+                        await widget.onFilePick!(File(path));
+                      }
+                    },
                   ),
                   _AttachmentItem(
                     icon: Icons.checklist_outlined,
