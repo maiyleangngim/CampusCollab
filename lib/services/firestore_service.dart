@@ -198,6 +198,52 @@ class FirestoreService {
     return roles[_uid] ?? 'member';
   }
 
+  /// Fetch a single group document.
+  Future<StudyGroup?> getGroup(String groupId) async {
+    final doc = await _db.collection('studyGroups').doc(groupId).get();
+    if (!doc.exists) return null;
+    final data = doc.data()!..['id'] = doc.id;
+    return StudyGroup.fromFirestore(data);
+  }
+
+  /// Remove a member from a group (owner/admin only — enforced in UI).
+  Future<void> kickMember(String groupId, String targetUid) async {
+    await _db.collection('studyGroups').doc(groupId).update({
+      'memberIds': FieldValue.arrayRemove([targetUid]),
+      'memberCount': FieldValue.increment(-1),
+      'memberRoles.$targetUid': FieldValue.delete(),
+    });
+  }
+
+  /// Set a member's role ('admin' or 'member') — owner only in UI.
+  Future<void> setMemberRole(
+      String groupId, String targetUid, String role) async {
+    await _db
+        .collection('studyGroups')
+        .doc(groupId)
+        .update({'memberRoles.$targetUid': role});
+  }
+
+  /// Update group name/description/courseCode. Pass only the fields to change.
+  Future<void> updateGroupInfo(
+    String groupId, {
+    String? name,
+    String? description,
+    String? courseCode,
+  }) async {
+    final data = <String, dynamic>{};
+    if (name != null) data['name'] = name;
+    if (description != null) data['description'] = description;
+    if (courseCode != null) data['courseCode'] = courseCode;
+    if (data.isEmpty) return;
+    await _db.collection('studyGroups').doc(groupId).update(data);
+  }
+
+  /// Permanently delete a group document (owner only — enforced in UI).
+  Future<void> deleteGroup(String groupId) async {
+    await _db.collection('studyGroups').doc(groupId).delete();
+  }
+
   // ── MESSAGES ────────────────────────────────────────────────────────────────
 
   Stream<List<Message>> messagesStream(String groupId) {
