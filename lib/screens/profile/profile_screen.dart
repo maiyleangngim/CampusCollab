@@ -99,10 +99,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: colorScheme.surface,
         elevation: 0.5,
         title: Row(
           children: [
@@ -123,7 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                backgroundColor: colorScheme.surfaceVariant,
                 backgroundImage: _avatarUrl != null
                     ? NetworkImage(_avatarUrl!)
                     : (_name.isNotEmpty
@@ -131,7 +132,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'https://ui-avatars.com/api/?name=$_name&background=1565C0&color=fff')
                         : null),
                 child: _avatarUrl == null && _name.isEmpty
-                    ? Icon(Icons.person, color: AppTheme.primary, size: 20)
+                    ? Icon(Icons.person, color: colorScheme.onSurfaceVariant, size: 20)
                     : null,
               ),
             ),
@@ -159,11 +160,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileCard() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -185,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 height: 120,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                  color: colorScheme.surfaceVariant,
                   image: _avatarUrl != null
                       ? DecorationImage(
                           image: NetworkImage(_avatarUrl!),
@@ -194,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       : null,
                 ),
                 child: _avatarUrl == null
-                    ? Icon(Icons.person, size: 56, color: AppTheme.primary)
+                    ? Icon(Icons.person, size: 56, color: colorScheme.onSurfaceVariant)
                     : null,
               ),
               Positioned(
@@ -231,14 +233,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(width: 10),
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                  color: colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.school, color: AppTheme.primary, size: 18),
@@ -268,7 +270,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text(
               _bio,
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
                 fontSize: 13,
                 height: 1.5,
               ),
@@ -354,6 +356,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       stream: FirestoreService().myGroupsStream(),
       builder: (context, snapshot) {
         final count = snapshot.data?.length ?? 0;
+        final colorScheme = Theme.of(context).colorScheme;
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -366,7 +369,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                  color: colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.groups, color: AppTheme.primary),
@@ -380,14 +383,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     'ACTIVE MEMBERSHIPS',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -405,6 +408,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       stream: FirestoreService().myGroupsStream(),
       builder: (context, snapshot) {
         final groups = snapshot.data ?? [];
+        final colorScheme = Theme.of(context).colorScheme;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,7 +423,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -431,7 +435,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
@@ -439,7 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Join a study group to see your focus areas here.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
+                        color: colorScheme.onSurfaceVariant, fontSize: 13),
                   ),
                 ),
               )
@@ -464,6 +468,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ];
 
   Widget _buildFocusCard(StudyGroup group) {
+    final colorScheme = Theme.of(context).colorScheme;
     final templateColor = group.template == 'exam_prep'
         ? const Color(0xFF6A1B9A)
         : group.template == 'assignment'
@@ -473,120 +478,130 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final visibleMembers = group.memberCount.clamp(0, 4);
     final overflow = group.memberCount - visibleMembers;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (group.courseCode.isNotEmpty)
-                Text(
-                  group.courseCode,
-                  style: TextStyle(
-                    color: templateColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: templateColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    group.template == 'exam_prep'
-                        ? 'Exam Prep'
-                        : group.template == 'assignment'
-                            ? 'Assignment'
-                            : 'General',
-                    style: TextStyle(
-                        color: templateColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              Icon(Icons.star, color: Color(0xFFD4AF37), size: 20),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            group.name,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          if (group.description.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              group.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-                height: 1.4,
-              ),
+    return InkWell(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.groupDetail,
+          arguments: group,
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              SizedBox(
-                width: (visibleMembers * 16.0) + 8,
-                height: 24,
-                child: Stack(
-                  children: List.generate(visibleMembers, (i) => Positioned(
-                    left: i * 16.0,
-                    child: CircleAvatar(
-                      radius: 12,
-                      backgroundColor: Theme.of(context).colorScheme.surface,
-                      child: CircleAvatar(
-                        radius: 10,
-                        backgroundColor:
-                            _memberColors[i % _memberColors.length],
-                      ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (group.courseCode.isNotEmpty)
+                  Text(
+                    group.courseCode,
+                    style: TextStyle(
+                      color: templateColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
-                  )),
-                ),
-              ),
-              if (overflow > 0) ...[
-                const SizedBox(width: 4),
-                Text(
-                  '+$overflow',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: templateColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      group.template == 'exam_prep'
+                          ? 'Exam Prep'
+                          : group.template == 'assignment'
+                              ? 'Assignment'
+                              : 'General',
+                      style: TextStyle(
+                          color: templateColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
+                Icon(Icons.star, color: Color(0xFFD4AF37), size: 20),
               ],
-              const Spacer(),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              group.name,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            if (group.description.isNotEmpty) ...[
+              const SizedBox(height: 6),
               Text(
-                '${group.memberCount} member${group.memberCount == 1 ? '' : 's'}',
+                group.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
               ),
             ],
-          ),
-        ],
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                SizedBox(
+                  width: (visibleMembers * 16.0) + 8,
+                  height: 24,
+                  child: Stack(
+                    children: List.generate(visibleMembers, (i) => Positioned(
+                      left: i * 16.0,
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: colorScheme.surface,
+                        child: CircleAvatar(
+                          radius: 10,
+                          backgroundColor:
+                              _memberColors[i % _memberColors.length],
+                        ),
+                      ),
+                    )),
+                  ),
+                ),
+                if (overflow > 0) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    '+$overflow',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                Text(
+                  '${group.memberCount} member${group.memberCount == 1 ? '' : 's'}',
+                  style: TextStyle(
+                      fontSize: 11, color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -632,7 +647,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
-
-
-

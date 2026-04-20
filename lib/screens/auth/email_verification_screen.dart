@@ -14,29 +14,51 @@ class EmailVerificationScreen extends StatefulWidget {
 }
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
+  final TextEditingController _otpController = TextEditingController();
+  bool _isVerifying = false;
   bool _resending = false;
   bool _resentSuccess = false;
-  Timer? _pollTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    // Poll every 4 seconds to check if the user verified their email.
-    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
-      final auth = context.read<AppAuthProvider>();
-      await auth.reloadUser();
-      if (auth.isEmailVerified && mounted) {
-        _pollTimer?.cancel();
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
-      }
-    });
-  }
 
   @override
   void dispose() {
-    _pollTimer?.cancel();
+    _otpController.dispose();
     super.dispose();
+  }
+
+  Future<void> _verifyOtp() async {
+    final code = _otpController.text.trim();
+    if (code.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter the 6-digit code'), behavior: SnackBarBehavior.floating),
+      );
+      return;
+    }
+
+    setState(() => _isVerifying = true);
+
+    try {
+      final auth = context.read<AppAuthProvider>();
+      final success = await auth.verifyEmailCode(code);
+
+      if (success && mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.error ?? 'Verification failed. Please check the code.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), behavior: SnackBarBehavior.floating),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isVerifying = false);
+    }
   }
 
   Future<void> _resend() async {
@@ -45,15 +67,22 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       _resentSuccess = false;
     });
     try {
-      await context.read<AppAuthProvider>().sendVerificationEmail();
-      if (mounted) setState(() => _resentSuccess = true);
+      final auth = context.read<AppAuthProvider>();
+      final success = await auth.sendVerificationEmail();
+      if (mounted && success) {
+        setState(() => _resentSuccess = true);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.error ?? 'Could not resend code.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not resend: $e'),
-            behavior: SnackBarBehavior.floating,
-          ),
+          SnackBar(content: Text('Could not resend: $e'), behavior: SnackBarBehavior.floating),
         );
       }
     } finally {
@@ -61,30 +90,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     }
   }
 
-  Future<void> _checkNow() async {
-    final auth = context.read<AppAuthProvider>();
-    await auth.reloadUser();
-    if (!mounted) return;
-    if (auth.isEmailVerified) {
-      _pollTimer?.cancel();
-      Navigator.of(context)
-          .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email not verified yet. Check your inbox.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
   Future<void> _logout() async {
-    _pollTimer?.cancel();
     await context.read<AppAuthProvider>().logout();
     if (mounted) {
-      Navigator.of(context)
-          .pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
     }
   }
 
@@ -95,13 +104,11 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Spacer(),
-
+              const SizedBox(height: 60),
               // ── Icon ───────────────────────────────────────────────────────
               Container(
                 width: 96,
@@ -117,7 +124,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
               // ── Heading ────────────────────────────────────────────────────
               Text(
-                'Verify your email',
+                'Enter Verification Code',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -127,7 +134,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'We sent a verification link to',
+                'We sent a 6-digit code to',
                 style: TextStyle(
                     fontSize: 14,
                     color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8)),
@@ -143,69 +150,86 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Open your email and tap the link to\nactivate your account.',
-                style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.5),
+              
+              const SizedBox(height: 32),
+
+              // ── OTP INPUT FIELD ──────────────────────────────────────────
+              TextField(
+                controller: _otpController,
+                keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
+                maxLength: 6,
+                style: TextStyle(
+                  fontSize: 28, 
+                  letterSpacing: 12, 
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                decoration: InputDecoration(
+                  hintText: '000000',
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
+                  counterText: '',
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppTheme.divider),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppTheme.divider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppTheme.primary, width: 2),
+                  ),
+                ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 32),
 
-              // ── Check button ───────────────────────────────────────────────
+              // ── Verify Button ──────────────────────────────────────────────
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _checkNow,
+                  onPressed: _isVerifying ? null : _verifyOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
                   ),
-                  child: Text("I've verified my email",
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600)),
+                  child: _isVerifying 
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text(
+                        "Verify Account",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                 ),
               ),
-              const SizedBox(height: 12),
+              
+              const SizedBox(height: 16),
 
-              // ── Resend button ──────────────────────────────────────────────
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: OutlinedButton(
-                  onPressed: _resending ? null : _resend,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppTheme.primary),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: _resending
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : Text(
-                          _resentSuccess
-                              ? 'Email sent!'
-                              : 'Resend verification email',
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: _resentSuccess
-                                  ? Colors.green
-                                  : AppTheme.primary),
+              // ── Resend Button ──────────────────────────────────────────────
+              TextButton(
+                onPressed: _resending ? null : _resend,
+                child: _resending
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(
+                        _resentSuccess ? 'Code Resent!' : 'Resend Code',
+                        style: TextStyle(
+                          color: _resentSuccess ? Colors.green : AppTheme.primary,
+                          fontWeight: FontWeight.w600,
                         ),
-                ),
+                      ),
               ),
-              const SizedBox(height: 20),
 
-              // ── Sign out link ──────────────────────────────────────────────
+              const SizedBox(height: 40),
               GestureDetector(
                 onTap: _logout,
                 child: Text(
@@ -217,7 +241,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -225,7 +248,3 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     );
   }
 }
-
-
-
-
