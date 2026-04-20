@@ -149,8 +149,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     final displayName = profile['displayName'] as String? ?? 'Unknown';
     final avatarUrl = profile['avatarUrl'] as String?;
+    final studentId = profile['studentId'] as String? ?? '';
+    final university = profile['university'] as String? ?? '';
+    final location = profile['location'] as String? ?? '';
     final major = profile['major'] as String? ?? '';
     final bio = profile['bio'] as String? ?? '';
+    final isLookingForGroup = profile['isLookingForGroup'] as bool? ?? false;
     final subjects = List<String>.from(profile['subjects'] as List? ?? const []);
     final limitedProfile = profile['limitedProfile'] as bool? ?? false;
 
@@ -230,18 +234,59 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ],
                   ),
                   if (!limitedProfile) ...[
-                    if (major.isNotEmpty) ...[
+                    if (studentId.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Text(
-                        major,
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        'ID: ${studentId.replaceFirst('ID: ', '')}',
+                        style: TextStyle(
+                          color: AppTheme.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
-                    if (bio.isNotEmpty) ...[
+                    if (university.isNotEmpty) ...[
                       const SizedBox(height: 10),
+                      _buildIconInfo(Icons.school_outlined, university),
+                    ],
+                    if (major.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _buildIconInfo(Icons.menu_book_outlined, major),
+                    ],
+                    if (location.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _buildIconInfo(Icons.location_on_outlined, location),
+                    ],
+                    if (bio.isNotEmpty) ...[
+                      const SizedBox(height: 12),
                       Text(
                         bio,
                         style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.4),
+                      ),
+                    ],
+                    if (isLookingForGroup) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppTheme.onlineGreen.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.circle, color: AppTheme.onlineGreen, size: 8),
+                            SizedBox(width: 6),
+                            Text(
+                              'Looking for a group',
+                              style: TextStyle(
+                                color: AppTheme.onlineGreen,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                     if (subjects.isNotEmpty) ...[
@@ -251,17 +296,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         runSpacing: 8,
                         children: subjects
                             .map(
-                              (subject) => Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primary.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  subject,
-                                  style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 12),
-                                ),
-                              ),
+                              _buildTag,
                             )
                             .toList(),
                       ),
@@ -308,6 +343,47 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconInfo(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTag(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: AppTheme.primary,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

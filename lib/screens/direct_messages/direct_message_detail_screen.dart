@@ -1,7 +1,14 @@
+import 'dart:io';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../constants/app_routes.dart';
 import '../../models/message.dart';
 import '../../services/firestore_service.dart';
+import '../../services/storage_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/chat_input_bar.dart';
 
 class DirectMessageDetailScreen extends StatefulWidget {
   final String conversationId;
@@ -23,20 +30,20 @@ class DirectMessageDetailScreen extends StatefulWidget {
 
 class _DirectMessageDetailScreenState extends State<DirectMessageDetailScreen> {
   final FirestoreService _firestore = FirestoreService();
-  final TextEditingController _controller = TextEditingController();
+  final StorageService _storage = StorageService();
   final ScrollController _scrollController = ScrollController();
   bool _blocked = false;
-  bool _sending = false;
+  String? _myAvatarUrl;
 
   @override
   void initState() {
     super.initState();
     _loadBlockState();
+    _loadMyAvatar();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -47,13 +54,19 @@ class _DirectMessageDetailScreenState extends State<DirectMessageDetailScreen> {
     setState(() => _blocked = blocked);
   }
 
-  Future<void> _send() async {
-    if (_sending || _blocked) return;
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
+  Future<void> _loadMyAvatar() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final userData = await _firestore.getUser(uid);
+    if (!mounted) return;
+    setState(() {
+      _myAvatarUrl = userData?['avatarUrl'] as String?;
+    });
+  }
 
-    setState(() => _sending = true);
-    _controller.clear();
+  Future<void> _sendText(String text) async {
+    if (_blocked) return;
+    if (text.isEmpty) return;
 
     try {
       await _firestore.sendDirectTextMessage(widget.conversationId, text);
@@ -66,9 +79,161 @@ class _DirectMessageDetailScreenState extends State<DirectMessageDetailScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-    } finally {
-      if (mounted) setState(() => _sending = false);
     }
+  }
+
+  Future<void> _sendImage(File file) async {
+    if (_blocked) return;
+    try {
+      final imageUrl =
+          await _storage.uploadDirectMessageImage(widget.conversationId, file);
+      await _firestore.sendDirectImageMessage(widget.conversationId, imageUrl);
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send image: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _sendFile(File file) async {
+    if (_blocked) return;
+    try {
+      final fileUrl =
+          await _storage.uploadDirectMessageFile(widget.conversationId, file);
+      final fileName = file.path.split(Platform.pathSeparator).last;
+      final sizeBytes = await file.length();
+      final sizeKb = (sizeBytes / 1024).toStringAsFixed(1);
+      await _firestore.sendDirectFileMessage(
+        widget.conversationId,
+        fileUrl: fileUrl,
+        fileName: fileName,
+        fileSubtitle: '$sizeKb KB',
+      );
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send file: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _openExternalUrl(String rawUrl) async {
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Widget _buildMessageBubble(Message msg) {
+    final isMe = msg.isMe;
+    final cs = Theme.of(context).colorScheme;
+
+    if (msg.type == MessageType.image && (msg.imageUrl?.isNotEmpty ?? false)) {
+      return InkWell(
+        onTap: () => _openExternalUrl(msg.imageUrl!),
+        borderRadius: BorderRadius.circular(16),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.network(
+            msg.imageUrl!,
+            width: 220,
+            height: 160,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              width: 220,
+              height: 160,
+              color: isMe
+                  ? AppTheme.primary.withValues(alpha: 0.2)
+                  : cs.surfaceContainerHighest,
+              alignment: Alignment.center,
+              child: const Icon(Icons.broken_image_outlined,
+                  size: 40, color: Colors.blueGrey),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (msg.type == MessageType.file && (msg.fileUrl?.isNotEmpty ?? false)) {
+      return InkWell(
+        onTap: () => _openExternalUrl(msg.fileUrl!),
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 280),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isMe ? AppTheme.primaryDark : cs.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: isMe ? null : Border.all(color: cs.outlineVariant),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isMe
+                      ? AppTheme.primaryDark.withValues(alpha: 0.6)
+                      : AppTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.description,
+                    color: isMe ? Colors.white : AppTheme.primary, size: 22),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      msg.fileName ?? 'File',
+                      style: TextStyle(
+                        color: isMe ? Colors.white : cs.onSurface,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      msg.fileSubtitle ?? 'Tap to open',
+                      style: TextStyle(
+                        color: isMe ? Colors.white70 : cs.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      constraints: const BoxConstraints(maxWidth: 280),
+      decoration: BoxDecoration(
+        color: isMe ? AppTheme.primary : cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        msg.text ?? '',
+        style: TextStyle(
+          color: isMe ? Colors.white : cs.onSurface,
+        ),
+      ),
+    );
   }
 
   void _scrollToBottom() {
@@ -246,23 +411,63 @@ class _DirectMessageDetailScreenState extends State<DirectMessageDetailScreen> {
                     final isMe = msg.isMe;
                     return Align(
                       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                        constraints: const BoxConstraints(maxWidth: 280),
-                        decoration: BoxDecoration(
-                          color: isMe
-                              ? AppTheme.primary
-                              : Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Text(
-                          msg.text ?? '',
-                          style: TextStyle(
-                            color: isMe
-                                ? Colors.white
-                                : Theme.of(context).colorScheme.onSurface,
-                          ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: isMe
+                              ? [
+                                  Flexible(child: _buildMessageBubble(msg)),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () => Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.profile,
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor:
+                                          AppTheme.primary.withValues(alpha: 0.15),
+                                      backgroundImage:
+                                          _myAvatarUrl != null && _myAvatarUrl!.isNotEmpty
+                                              ? NetworkImage(_myAvatarUrl!)
+                                              : null,
+                                      child: (_myAvatarUrl == null || _myAvatarUrl!.isEmpty)
+                                          ? const Icon(
+                                              Icons.person,
+                                              size: 16,
+                                              color: AppTheme.primary,
+                                            )
+                                          : null,
+                                    ),
+                                  ),
+                                ]
+                              : [
+                                  CircleAvatar(
+                                    radius: 14,
+                                    backgroundColor:
+                                        AppTheme.primary.withValues(alpha: 0.12),
+                                    backgroundImage: widget.otherUserAvatarUrl != null &&
+                                            widget.otherUserAvatarUrl!.isNotEmpty
+                                        ? NetworkImage(widget.otherUserAvatarUrl!)
+                                        : null,
+                                    child: (widget.otherUserAvatarUrl == null ||
+                                            widget.otherUserAvatarUrl!.isEmpty)
+                                        ? Text(
+                                            widget.otherUserName.isNotEmpty
+                                                ? widget.otherUserName[0].toUpperCase()
+                                                : '?',
+                                            style: const TextStyle(
+                                              color: AppTheme.primary,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(child: _buildMessageBubble(msg)),
+                                ],
                         ),
                       ),
                     );
@@ -271,46 +476,28 @@ class _DirectMessageDetailScreenState extends State<DirectMessageDetailScreen> {
               },
             ),
           ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      enabled: !_blocked,
-                      onSubmitted: (_) => _send(),
-                      decoration: InputDecoration(
-                        hintText: _blocked ? 'Messaging disabled' : 'Type a message...',
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      ),
-                    ),
+          if (_blocked)
+            SafeArea(
+              top: false,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                child: Text(
+                  'You cannot send messages while this block is active.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
                   ),
-                  const SizedBox(width: 8),
-                  FloatingActionButton.small(
-                    heroTag: 'dmSend',
-                    onPressed: _blocked || _sending ? null : _send,
-                    backgroundColor: AppTheme.primary,
-                    child: _sending
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.send, color: Colors.white),
-                  ),
-                ],
+                  textAlign: TextAlign.center,
+                ),
               ),
+            )
+          else
+            ChatInputBar(
+              onSend: _sendText,
+              onImagePick: _sendImage,
+              onFilePick: _sendFile,
             ),
-          ),
         ],
       ),
     );

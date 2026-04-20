@@ -34,4 +34,24 @@ class StorageService {
     await ref.putFile(file);
     return ref.getDownloadURL();
   }
+
+  /// Upload a direct-message image and return the download URL.
+  Future<String> uploadDirectMessageImage(String conversationId, File file) async {
+    final name = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final ref = _storage.ref().child('direct_message_images/$conversationId/$name');
+    await ref.putFile(file);
+    return ref.getDownloadURL();
+  }
+
+  /// Upload a direct-message file and return the download URL.
+  Future<String> uploadDirectMessageFile(String conversationId, File file) async {
+    final fileName = file.path.split(Platform.pathSeparator).last;
+    final dot = fileName.lastIndexOf('.');
+    final ext = dot >= 0 ? fileName.substring(dot) : '';
+    final safeExt = ext.isEmpty ? '' : ext;
+    final name = '${DateTime.now().millisecondsSinceEpoch}$safeExt';
+    final ref = _storage.ref().child('direct_message_files/$conversationId/$name');
+    await ref.putFile(file);
+    return ref.getDownloadURL();
+  }
 }

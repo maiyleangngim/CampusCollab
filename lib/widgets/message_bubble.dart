@@ -96,6 +96,8 @@ class MessageBubble extends StatelessWidget {
   /// The parent (ChatDetailScreen) shows the dialog from its stable context.
   final void Function(Message)? onEditRequest;
   final void Function(String senderUid)? onSenderTap;
+  final String? myAvatarUrl;
+  final VoidCallback? onMyAvatarTap;
 
   const MessageBubble({
     super.key,
@@ -104,6 +106,8 @@ class MessageBubble extends StatelessWidget {
     required this.myRole,
     this.onEditRequest,
     this.onSenderTap,
+    this.myAvatarUrl,
+    this.onMyAvatarTap,
   });
 
   bool get _canEdit =>
@@ -144,7 +148,11 @@ class MessageBubble extends StatelessWidget {
         GestureDetector(
           onLongPress: () => _showOptions(context),
           child: message.isMe
-              ? _SentBubble(message: message)
+              ? _SentBubble(
+                  message: message,
+                  myAvatarUrl: myAvatarUrl,
+                  onMyAvatarTap: onMyAvatarTap,
+                )
               : _ReceivedBubble(
                   message: message,
                   onSenderTap: onSenderTap,
@@ -223,7 +231,14 @@ class _ReactionsRow extends StatelessWidget {
 
 class _SentBubble extends StatelessWidget {
   final Message message;
-  const _SentBubble({required this.message});
+  final String? myAvatarUrl;
+  final VoidCallback? onMyAvatarTap;
+
+  const _SentBubble({
+    required this.message,
+    this.myAvatarUrl,
+    this.onMyAvatarTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -235,10 +250,18 @@ class _SentBubble extends StatelessWidget {
         children: [
           Flexible(child: _buildContent(context)),
           const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: AppTheme.primaryLight,
-            child: const Icon(Icons.person, size: 16, color: Colors.white),
+          GestureDetector(
+            onTap: onMyAvatarTap,
+            child: CircleAvatar(
+              radius: 14,
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+              backgroundImage: myAvatarUrl != null && myAvatarUrl!.isNotEmpty
+                  ? NetworkImage(myAvatarUrl!)
+                  : null,
+              child: (myAvatarUrl == null || myAvatarUrl!.isEmpty)
+                  ? const Icon(Icons.person, size: 16, color: AppTheme.primary)
+                  : null,
+            ),
           ),
         ],
       ),

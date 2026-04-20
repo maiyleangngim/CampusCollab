@@ -517,6 +517,51 @@ class FirestoreService {
   }
 
   Future<void> sendDirectTextMessage(String conversationId, String text) async {
+    await _sendDirectMessagePayload(
+      conversationId,
+      messageData: {
+        'type': 'text',
+        'content': text,
+      },
+      previewText: text,
+    );
+  }
+
+  Future<void> sendDirectImageMessage(String conversationId, String imageUrl) async {
+    await _sendDirectMessagePayload(
+      conversationId,
+      messageData: {
+        'type': 'image',
+        'imageUrl': imageUrl,
+      },
+      previewText: '📷 Image',
+    );
+  }
+
+  Future<void> sendDirectFileMessage(
+    String conversationId, {
+    required String fileUrl,
+    required String fileName,
+    String? fileSubtitle,
+  }) async {
+    await _sendDirectMessagePayload(
+      conversationId,
+      messageData: {
+        'type': 'file',
+        'fileUrl': fileUrl,
+        'fileName': fileName,
+        if (fileSubtitle != null && fileSubtitle.isNotEmpty)
+          'fileSubtitle': fileSubtitle,
+      },
+      previewText: '📎 $fileName',
+    );
+  }
+
+  Future<void> _sendDirectMessagePayload(
+    String conversationId, {
+    required Map<String, dynamic> messageData,
+    required String previewText,
+  }) async {
     final me = _uid;
     final convo = await _dmDoc(conversationId).get();
     if (!convo.exists) throw Exception('Conversation not found.');
@@ -540,12 +585,11 @@ class FirestoreService {
       'senderId': me,
       'senderName': name,
       if (avatarUrl != null) 'senderAvatarUrl': avatarUrl,
-      'type': 'text',
-      'content': text,
+      ...messageData,
       'timestamp': FieldValue.serverTimestamp(),
     });
     batch.update(_dmDoc(conversationId), {
-      'lastMessage': text,
+      'lastMessage': previewText,
       'lastMessageTime': FieldValue.serverTimestamp(),
     });
 
@@ -556,7 +600,7 @@ class FirestoreService {
         'otherUserId': otherUid,
         'otherUserName': otherName,
         if (otherAvatar != null) 'otherUserAvatarUrl': otherAvatar,
-        'lastMessage': text,
+        'lastMessage': previewText,
         'lastMessageTime': FieldValue.serverTimestamp(),
       },
       SetOptions(merge: true),
@@ -569,7 +613,7 @@ class FirestoreService {
         'otherUserId': me,
         'otherUserName': name,
         if (avatarUrl != null) 'otherUserAvatarUrl': avatarUrl,
-        'lastMessage': text,
+        'lastMessage': previewText,
         'lastMessageTime': FieldValue.serverTimestamp(),
       },
       SetOptions(merge: true),

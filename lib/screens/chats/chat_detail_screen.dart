@@ -25,6 +25,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final TextEditingController _editCtrl = TextEditingController();
 
   Message? _editingMessage;
+  String? _myAvatarUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMyAvatar();
+  }
 
   String get _myRole {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -36,6 +43,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _scrollCtrl.dispose();
     _editCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadMyAvatar() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final userData = await _firestore.getUser(uid);
+    if (!mounted) return;
+    setState(() {
+      _myAvatarUrl = userData?['avatarUrl'] as String?;
+    });
   }
 
   void _scrollToBottom() {
@@ -274,9 +291,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     groupId: widget.group.id,
                     myRole: _myRole,
                     onEditRequest: _startEdit,
+                    myAvatarUrl: _myAvatarUrl,
+                    onMyAvatarTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.profile,
+                    ),
                     onSenderTap: (senderUid) {
                       final myUid = FirebaseAuth.instance.currentUser?.uid;
-                      if (senderUid == myUid) return;
+                      if (senderUid == myUid) {
+                        Navigator.pushNamed(context, AppRoutes.profile);
+                        return;
+                      }
                       Navigator.pushNamed(
                         context,
                         AppRoutes.userProfile,
