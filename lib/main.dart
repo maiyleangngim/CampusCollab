@@ -16,11 +16,16 @@ import 'screens/home/home_screen.dart';
 import 'screens/chats/chats_screen.dart';
 import 'screens/chats/chat_detail_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/profile/privacy_settings_screen.dart';
+import 'screens/profile/user_profile_screen.dart';
+import 'screens/profile/user_search_screen.dart';
 import 'screens/groups/create_group_screen.dart';
 import 'screens/groups/group_detail_screen.dart';
 import 'screens/tasks/group_tasks_screen.dart';
 import 'screens/resources/resource_vault_screen.dart';
 import 'screens/study/pomodoro_screen.dart';
+import 'screens/direct_messages/direct_messages_screen.dart';
+import 'screens/direct_messages/direct_message_detail_screen.dart';
 import 'models/study_group.dart';
 
 void main() async {
@@ -56,6 +61,9 @@ class CampusCollabApp extends StatelessWidget {
             AppRoutes.chats:       (_) => const ChatsScreen(),
             AppRoutes.profile:     (_) => const ProfileScreen(),
             AppRoutes.createGroup: (_) => const CreateGroupScreen(),
+            AppRoutes.directMessages: (_) => const DirectMessagesScreen(),
+            AppRoutes.privacySettings: (_) => const PrivacySettingsScreen(),
+            AppRoutes.userSearch: (_) => const UserSearchScreen(),
           },
           onGenerateRoute: (settings) {
             switch (settings.name) {
@@ -77,6 +85,19 @@ class CampusCollabApp extends StatelessWidget {
                 final group = settings.arguments as StudyGroup;
                 return MaterialPageRoute(
                     builder: (_) => PomodoroScreen(groupId: group.id, groupName: group.name));
+              case AppRoutes.userProfile:
+                final uid = settings.arguments as String;
+                return MaterialPageRoute(builder: (_) => UserProfileScreen(userId: uid));
+              case AppRoutes.directMessageDetail:
+                final args = settings.arguments as Map<String, dynamic>;
+                return MaterialPageRoute(
+                  builder: (_) => DirectMessageDetailScreen(
+                    conversationId: args['conversationId'] as String,
+                    otherUserId: args['otherUserId'] as String,
+                    otherUserName: args['otherUserName'] as String? ?? 'Unknown',
+                    otherUserAvatarUrl: args['otherUserAvatarUrl'] as String?,
+                  ),
+                );
             }
             return null;
           },

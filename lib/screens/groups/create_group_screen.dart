@@ -77,7 +77,12 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Create Study Group', style: AppTheme.titleStyle),
+        title: Text('Create Study Group',
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.4)),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),

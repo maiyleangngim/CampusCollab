@@ -95,6 +95,7 @@ class MessageBubble extends StatelessWidget {
   /// Called when the user requests to edit this message.
   /// The parent (ChatDetailScreen) shows the dialog from its stable context.
   final void Function(Message)? onEditRequest;
+  final void Function(String senderUid)? onSenderTap;
 
   const MessageBubble({
     super.key,
@@ -102,6 +103,7 @@ class MessageBubble extends StatelessWidget {
     required this.groupId,
     required this.myRole,
     this.onEditRequest,
+    this.onSenderTap,
   });
 
   bool get _canEdit =>
@@ -143,7 +145,10 @@ class MessageBubble extends StatelessWidget {
           onLongPress: () => _showOptions(context),
           child: message.isMe
               ? _SentBubble(message: message)
-              : _ReceivedBubble(message: message),
+              : _ReceivedBubble(
+                  message: message,
+                  onSenderTap: onSenderTap,
+                ),
         ),
         if (hasReactions)
           Padding(
@@ -232,7 +237,7 @@ class _SentBubble extends StatelessWidget {
           const SizedBox(width: 8),
           CircleAvatar(
             radius: 14,
-            backgroundColor: Colors.blue[300],
+            backgroundColor: AppTheme.primaryLight,
             child: const Icon(Icons.person, size: 16, color: Colors.white),
           ),
         ],
@@ -286,7 +291,12 @@ class _SentBubble extends StatelessWidget {
 
 class _ReceivedBubble extends StatelessWidget {
   final Message message;
-  const _ReceivedBubble({required this.message});
+  final void Function(String senderUid)? onSenderTap;
+
+  const _ReceivedBubble({
+    required this.message,
+    this.onSenderTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -297,15 +307,21 @@ class _ReceivedBubble extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: Colors.grey[400],
-            child: Text(
-              message.senderName.isNotEmpty ? message.senderName[0] : '?',
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold),
+          GestureDetector(
+            onTap: message.senderId.isEmpty
+                ? null
+                : () => onSenderTap?.call(message.senderId),
+            child: CircleAvatar(
+              radius: 14,
+              backgroundColor:
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: Text(
+                message.senderName.isNotEmpty ? message.senderName[0] : '?',
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -319,6 +335,8 @@ class _ReceivedBubble extends StatelessWidget {
                       fontSize: 12,
                       color: cs.onSurfaceVariant,
                       fontWeight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
                 _buildContent(context),
@@ -402,9 +420,9 @@ class _FileCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isMe ? Colors.blue[600] : Colors.white,
+          color: isMe ? AppTheme.primaryDark : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: isMe ? null : Border.all(color: Colors.grey[200]!),
+          border: isMe ? null : Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           boxShadow: isMe
               ? null
               : [
@@ -420,11 +438,11 @@ class _FileCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isMe ? Colors.blue[800] : Colors.blue[50],
+                color: isMe ? AppTheme.primaryDark.withValues(alpha: 0.6) : AppTheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.description,
-                  color: isMe ? Colors.white : Colors.blue[700], size: 24),
+                  color: isMe ? Colors.white : AppTheme.primary, size: 24),
             ),
             const SizedBox(width: 10),
             Flexible(
@@ -436,7 +454,7 @@ class _FileCard extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
-                      color: isMe ? Colors.white : Colors.black87,
+                      color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -445,14 +463,15 @@ class _FileCard extends StatelessWidget {
                     message.fileSubtitle ?? 'Tap to open',
                     style: TextStyle(
                         fontSize: 11,
-                        color: isMe ? Colors.blue[100] : Colors.grey[500]),
+                        color: isMe ? Colors.white70 : Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
             Icon(Icons.open_in_new,
-                size: 16, color: isMe ? Colors.white70 : Colors.grey[500]),
+                size: 16,
+                color: isMe ? Colors.white70 : Theme.of(context).colorScheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -482,7 +501,7 @@ class _ImageCard extends StatelessWidget {
         width: 220,
         height: 160,
         decoration: BoxDecoration(
-          color: isMe ? Colors.blue[100] : Colors.grey[300],
+          color: isMe ? AppTheme.primary.withValues(alpha: 0.2) : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Icon(Icons.broken_image_outlined,
@@ -504,7 +523,7 @@ class _ImageCard extends StatelessWidget {
             loadingBuilder: (context, child, progress) {
               if (progress == null) return child;
               return Container(
-                color: isMe ? Colors.blue[100] : Colors.grey[300],
+                color: isMe ? AppTheme.primary.withValues(alpha: 0.2) : Theme.of(context).colorScheme.surfaceContainerHighest,
                 alignment: Alignment.center,
                 child: const SizedBox(
                   width: 24,
@@ -514,7 +533,7 @@ class _ImageCard extends StatelessWidget {
               );
             },
             errorBuilder: (context, error, stackTrace) => Container(
-              color: isMe ? Colors.blue[100] : Colors.grey[300],
+              color: isMe ? AppTheme.primary.withValues(alpha: 0.2) : Theme.of(context).colorScheme.surfaceContainerHighest,
               alignment: Alignment.center,
               child: const Icon(Icons.broken_image_outlined,
                   size: 40, color: Colors.blueGrey),

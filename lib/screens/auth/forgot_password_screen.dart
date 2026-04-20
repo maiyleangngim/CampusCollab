@@ -141,10 +141,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   textInputAction: TextInputAction.done,
                   autocorrect: false,
                   onFieldSubmitted: (_) => _isLoading ? null : _submit(),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'you@campus.edu',
                     prefixIcon: Icon(Icons.email_outlined,
-                        color: AppTheme.textTertiary),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Enter your email';

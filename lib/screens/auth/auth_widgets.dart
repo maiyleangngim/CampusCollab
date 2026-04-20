@@ -93,21 +93,22 @@ class AuthOrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    final divColor = Theme.of(context).colorScheme.outlineVariant;
+    return Row(
       children: [
-        Expanded(child: Divider(color: AppTheme.divider)),
+        Expanded(child: Divider(color: divColor)),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             'or',
             style: TextStyle(
-              color: AppTheme.textTertiary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
-        Expanded(child: Divider(color: AppTheme.divider)),
+        Expanded(child: Divider(color: divColor)),
       ],
     );
   }

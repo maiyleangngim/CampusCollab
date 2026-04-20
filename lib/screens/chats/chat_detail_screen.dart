@@ -274,6 +274,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     groupId: widget.group.id,
                     myRole: _myRole,
                     onEditRequest: _startEdit,
+                    onSenderTap: (senderUid) {
+                      final myUid = FirebaseAuth.instance.currentUser?.uid;
+                      if (senderUid == myUid) return;
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.userProfile,
+                        arguments: senderUid,
+                      );
+                    },
                   ),
                 );
               },

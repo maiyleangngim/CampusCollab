@@ -235,7 +235,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           children: [
             Image.asset('assets/images/logo.png', width: 28),
             const SizedBox(width: 8),
-            Text('CampusCollab', style: AppTheme.titleStyle),
+            Text('CampusCollab',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.4)),
           ],
         ),
         actions: [
@@ -315,12 +320,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         decoration: BoxDecoration(
                           color: active
                               ? AppTheme.primary
-                              : AppTheme.background,
+                              : Theme.of(context).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: active
                                 ? AppTheme.primary
-                                : AppTheme.divider,
+                                : Theme.of(context).colorScheme.outlineVariant,
                           ),
                         ),
                         child: Text(label,

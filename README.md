@@ -4,13 +4,15 @@ CampusCollab is a Flutter + Firebase campus collaboration app focused on study g
 
 ## Current Status
 
-This project is no longer a UI-only prototype.
+Fully backend-connected — no UI-only placeholder screens remain.
 
 - Firebase Authentication is integrated (email/password, Google, anonymous).
 - Firestore powers groups, chat, folders, tasks, resources, sessions, and user profile data.
-- OTP verification and password-reset OTP flows are implemented.
+- OTP verification (SHA-256 hashed) and password-reset OTP flows are fully implemented.
 - Calendar integrates both study sessions and group task deadlines.
 - Chat supports edit/delete/reactions and attachment/link workflows.
+- Light and dark theme with persistence via SharedPreferences.
+- Chat quick-action bar gives one-tap access to Tasks, Resources, Pomodoro, and Member management from within each group chat.
 
 ## Implemented Features
 
@@ -32,10 +34,15 @@ This project is no longer a UI-only prototype.
     - Advanced task fields (description, priority, optional deadline)
     - Task editing and status tracking
     - Cross-group deadline visibility in Calendar
+- Group management:
+    - QR code + invite link generation
+    - Moderator promotion / demotion / kick
+    - Owner-only group edit and delete (danger zone)
 - Other modules:
-    - Resource Vault
-    - Pomodoro screen
-    - Profile and settings (theme persistence)
+    - Resource Vault (link sharing per group)
+    - Pomodoro timer (25/5 focus-break cycle, per group)
+    - Profile and settings with light/dark/system theme persistence
+    - Discover screen for browsing and joining public groups
 
 ## Tech Stack
 

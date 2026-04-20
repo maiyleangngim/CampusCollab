@@ -100,7 +100,12 @@ class _ResourceVaultScreenState extends State<ResourceVaultScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Resource Vault', style: AppTheme.titleStyle),
+            Text('Resource Vault',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.4)),
             Text(widget.groupName,
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
           ],

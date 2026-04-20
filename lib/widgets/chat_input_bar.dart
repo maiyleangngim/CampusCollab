@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
+import '../theme/app_theme.dart';
 
 class ChatInputBar extends StatefulWidget {
   final Future<void> Function(String text) onSend;
@@ -54,7 +55,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: Theme.of(context).colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -70,7 +71,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
                   _AttachmentItem(
                     icon: Icons.image_outlined,
                     label: 'Image',
-                    color: Colors.blue[700]!,
+                    color: AppTheme.primary,
                     onTap: () async {
                       Navigator.pop(context);
                       if (widget.onImagePick == null) return;
@@ -138,16 +139,22 @@ class _ChatInputBarState extends State<ChatInputBar> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
+                  color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: colorScheme.outlineVariant),
                 ),
                 child: TextField(
                   controller: _controller,
                   onSubmitted: (_) => _handleSend(),
-                  decoration: InputDecoration.collapsed(
+                  decoration: InputDecoration(
                     hintText: 'Type a message...',
                     hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: true,
+                    fillColor: Colors.transparent,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
                   ),
                   style: TextStyle(
                     fontSize: 15,
@@ -159,7 +166,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
             const SizedBox(width: 8),
             Container(
               decoration: BoxDecoration(
-                color: Colors.blue[700],
+                color: AppTheme.primary,
                 shape: BoxShape.circle,
               ),
               child: _isSending

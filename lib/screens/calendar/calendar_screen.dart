@@ -50,7 +50,12 @@ class _CalendarScreenState extends State<CalendarScreen>
           children: [
             Image.asset('assets/images/logo.png', width: 26),
             const SizedBox(width: 8),
-            Text('CampusCollab', style: AppTheme.titleStyle),
+            Text('CampusCollab',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.4)),
           ],
         ),
         actions: [

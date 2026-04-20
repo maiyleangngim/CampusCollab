@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/message.dart';
 import '../models/study_group.dart';
 import '../models/discover_group.dart';
+import '../models/direct_message_conversation.dart';
+import '../models/user_privacy.dart';
 import '../models/task.dart';
 import '../models/study_session.dart';
 import '../models/resource_item.dart';
@@ -28,6 +30,37 @@ class FirestoreService {
     return List.generate(8, (_) => chars[rand.nextInt(chars.length)]).join();
   }
 
+  static String _directConversationId(String uidA, String uidB) {
+    final ids = [uidA, uidB]..sort();
+    return '${ids[0]}_${ids[1]}';
+  }
+
+  DocumentReference<Map<String, dynamic>> _privacyDoc(String uid) {
+    return _db.collection('userPrivacy').doc(uid);
+  }
+
+  DocumentReference<Map<String, dynamic>> _dmDoc(String conversationId) {
+    return _db.collection('directMessages').doc(conversationId);
+  }
+
+  Future<void> _assertCanDm(String targetUid) async {
+    if (targetUid == _uid) {
+      throw Exception('You cannot message yourself.');
+    }
+
+    final myPrivacy = await getMyPrivacy();
+    final targetPrivacy = await getUserPrivacy(targetUid);
+
+    if (myPrivacy.blockedUsers.contains(targetUid) ||
+        targetPrivacy.blockedUsers.contains(_uid)) {
+      throw Exception('Direct messaging is unavailable due to block settings.');
+    }
+
+    if (targetPrivacy.dmAccess == 'none') {
+      throw Exception('This user is not accepting direct messages right now.');
+    }
+  }
+
   // ── USER ────────────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>?> getUser(String uid) async {
@@ -37,6 +70,149 @@ class FirestoreService {
 
   Future<void> updateUserProfile(Map<String, dynamic> fields) {
     return _db.collection('users').doc(_uid).update(fields);
+  }
+
+  Future<UserPrivacy> getMyPrivacy() async {
+    final doc = await _privacyDoc(_uid).get();
+    return UserPrivacy.fromFirestore(_uid, doc.data());
+  }
+
+  Future<UserPrivacy> getUserPrivacy(String uid) async {
+    final doc = await _privacyDoc(uid).get();
+    return UserPrivacy.fromFirestore(uid, doc.data());
+  }
+
+  Future<void> updateMyPrivacy({
+    String? dmAccess,
+    String? profileVisibility,
+  }) async {
+    final data = <String, dynamic>{};
+    if (dmAccess != null) data['dmAccess'] = dmAccess;
+    if (profileVisibility != null) data['profileVisibility'] = profileVisibility;
+    if (data.isEmpty) return;
+    await _privacyDoc(_uid).set(data, SetOptions(merge: true));
+  }
+
+  Future<void> blockUser(String targetUid) async {
+    if (targetUid == _uid) return;
+    await _privacyDoc(_uid).set({
+      'blockedUsers': FieldValue.arrayUnion([targetUid]),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> unblockUser(String targetUid) async {
+    await _privacyDoc(_uid).set({
+      'blockedUsers': FieldValue.arrayRemove([targetUid]),
+    }, SetOptions(merge: true));
+  }
+
+  Future<bool> isBlockedEitherDirection(String targetUid) async {
+    final mine = await getMyPrivacy();
+    final theirs = await getUserPrivacy(targetUid);
+    return mine.blockedUsers.contains(targetUid) ||
+        theirs.blockedUsers.contains(_uid);
+  }
+
+  Future<void> reportUser({
+    required String targetUid,
+    required String reason,
+    String? note,
+  }) async {
+    await _db.collection('userReports').add({
+      'reporterUid': _uid,
+      'targetUid': targetUid,
+      'reason': reason,
+      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> searchUsersByDisplayName(
+    String query, {
+    int limit = 20,
+  }) async {
+    final q = query.trim();
+    if (q.isEmpty) return [];
+
+    final myPrivacy = await getMyPrivacy();
+    final blockedByMe = myPrivacy.blockedUsers.toSet();
+
+    final snap = await _db
+        .collection('users')
+        .orderBy('displayName')
+        .startAt([q])
+        .endAt(['$q\uf8ff'])
+        .limit(limit)
+        .get();
+
+    return snap.docs
+        .where((doc) => doc.id != _uid && !blockedByMe.contains(doc.id))
+        .map((doc) => {
+              'uid': doc.id,
+              ...doc.data(),
+            })
+        .toList();
+  }
+
+  Future<bool> sharesAnyGroupWith(String targetUid) async {
+    final mine = await _db
+        .collection('studyGroups')
+        .where('memberIds', arrayContains: _uid)
+        .limit(120)
+        .get();
+    for (final doc in mine.docs) {
+      final members = List<String>.from(doc.data()['memberIds'] ?? const []);
+      if (members.contains(targetUid)) return true;
+    }
+    return false;
+  }
+
+  Future<Map<String, dynamic>?> getVisibleUserProfile(String uid) async {
+    final doc = await _db.collection('users').doc(uid).get();
+    if (!doc.exists) return null;
+
+    final blocked = await isBlockedEitherDirection(uid);
+    if (blocked) {
+      return {
+        'uid': uid,
+        'displayName': doc.data()?['displayName'] ?? 'Unknown',
+        'blocked': true,
+      };
+    }
+
+    final privacy = await getUserPrivacy(uid);
+    final profile = <String, dynamic>{
+      'uid': uid,
+      ...?doc.data(),
+      'blocked': false,
+      'profileVisibility': privacy.profileVisibility,
+    };
+
+    if (privacy.profileVisibility == 'private') {
+      return {
+        'uid': uid,
+        'displayName': profile['displayName'] ?? 'Unknown',
+        'avatarUrl': profile['avatarUrl'],
+        'blocked': false,
+        'limitedProfile': true,
+      };
+    }
+
+    if (privacy.profileVisibility == 'shared_group') {
+      final shared = await sharesAnyGroupWith(uid);
+      if (!shared) {
+        return {
+          'uid': uid,
+          'displayName': profile['displayName'] ?? 'Unknown',
+          'avatarUrl': profile['avatarUrl'],
+          'blocked': false,
+          'limitedProfile': true,
+        };
+      }
+    }
+
+    profile['limitedProfile'] = false;
+    return profile;
   }
 
   Future<int> getKarmaTotal() async {
@@ -242,6 +418,185 @@ class FirestoreService {
   /// Permanently delete a group document (owner only — enforced in UI).
   Future<void> deleteGroup(String groupId) async {
     await _db.collection('studyGroups').doc(groupId).delete();
+  }
+
+  // ── DIRECT MESSAGES ────────────────────────────────────────────────────────
+
+  Future<String> getOrCreateDirectConversation(String targetUid) async {
+    await _assertCanDm(targetUid);
+
+    final me = _uid;
+    final conversationId = _directConversationId(me, targetUid);
+    final conversationRef = _dmDoc(conversationId);
+    final existing = await conversationRef.get();
+    if (existing.exists) return conversationId;
+
+    final myUser = await _db.collection('users').doc(me).get();
+    final targetUser = await _db.collection('users').doc(targetUid).get();
+    final myName = myUser.data()?['displayName'] ?? 'Unknown';
+    final targetName = targetUser.data()?['displayName'] ?? 'Unknown';
+    final myAvatar = myUser.data()?['avatarUrl'];
+    final targetAvatar = targetUser.data()?['avatarUrl'];
+
+    final batch = _db.batch();
+    batch.set(conversationRef, {
+      'participantIds': [me, targetUid],
+      'createdAt': FieldValue.serverTimestamp(),
+      'lastMessage': '',
+      'lastMessageTime': FieldValue.serverTimestamp(),
+    });
+
+    batch.set(
+      _db.collection('users').doc(me).collection('directConversations').doc(conversationId),
+      {
+        'participantIds': [me, targetUid],
+        'otherUserId': targetUid,
+        'otherUserName': targetName,
+        if (targetAvatar != null) 'otherUserAvatarUrl': targetAvatar,
+        'lastMessage': '',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+
+    batch.set(
+      _db.collection('users').doc(targetUid).collection('directConversations').doc(conversationId),
+      {
+        'participantIds': [me, targetUid],
+        'otherUserId': me,
+        'otherUserName': myName,
+        if (myAvatar != null) 'otherUserAvatarUrl': myAvatar,
+        'lastMessage': '',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+
+    await batch.commit();
+    return conversationId;
+  }
+
+  Stream<List<DirectMessageConversation>> myDirectConversationsStream() {
+    return _db
+        .collection('users')
+        .doc(_uid)
+        .collection('directConversations')
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => DirectMessageConversation.fromFirestore(d.id, d.data()))
+            .toList());
+  }
+
+  Stream<List<Message>> directMessagesStream(String conversationId) {
+    return _dmDoc(conversationId)
+        .collection('messages')
+        .orderBy('timestamp')
+        .snapshots()
+        .map((snap) => snap.docs.map((d) {
+              final data = d.data();
+              final ts = data['timestamp'];
+              return Message(
+                id: d.id,
+                senderId: data['senderId'] ?? '',
+                senderName: data['senderName'] ?? '',
+                type: _parseType(data['type']),
+                text: data['content'],
+                imageUrl: data['imageUrl'],
+                fileUrl: data['fileUrl'],
+                fileName: data['fileName'],
+                fileSubtitle: data['fileSubtitle'],
+                timestamp: ts is Timestamp ? ts.toDate() : DateTime.now(),
+                isMe: data['senderId'] == _uid,
+                isEdited: data['isEdited'] as bool? ?? false,
+                reactions: _parseReactions(data['reactions']),
+              );
+            }).toList());
+  }
+
+  Future<void> sendDirectTextMessage(String conversationId, String text) async {
+    final me = _uid;
+    final convo = await _dmDoc(conversationId).get();
+    if (!convo.exists) throw Exception('Conversation not found.');
+    final participantIds = List<String>.from(convo.data()?['participantIds'] ?? const []);
+    if (!participantIds.contains(me)) {
+      throw Exception('You do not have access to this conversation.');
+    }
+    final otherUid = participantIds.firstWhere((id) => id != me, orElse: () => '');
+    await _assertCanDm(otherUid);
+
+    final userDoc = await _db.collection('users').doc(me).get();
+    final name = userDoc.data()?['displayName'] ?? 'Unknown';
+    final avatarUrl = userDoc.data()?['avatarUrl'];
+    final otherDoc = await _db.collection('users').doc(otherUid).get();
+    final otherName = otherDoc.data()?['displayName'] ?? 'Unknown';
+    final otherAvatar = otherDoc.data()?['avatarUrl'];
+
+    final batch = _db.batch();
+    final msgRef = _dmDoc(conversationId).collection('messages').doc();
+    batch.set(msgRef, {
+      'senderId': me,
+      'senderName': name,
+      if (avatarUrl != null) 'senderAvatarUrl': avatarUrl,
+      'type': 'text',
+      'content': text,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    batch.update(_dmDoc(conversationId), {
+      'lastMessage': text,
+      'lastMessageTime': FieldValue.serverTimestamp(),
+    });
+
+    batch.set(
+      _db.collection('users').doc(me).collection('directConversations').doc(conversationId),
+      {
+        'participantIds': participantIds,
+        'otherUserId': otherUid,
+        'otherUserName': otherName,
+        if (otherAvatar != null) 'otherUserAvatarUrl': otherAvatar,
+        'lastMessage': text,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+
+    batch.set(
+      _db.collection('users').doc(otherUid).collection('directConversations').doc(conversationId),
+      {
+        'participantIds': participantIds,
+        'otherUserId': me,
+        'otherUserName': name,
+        if (avatarUrl != null) 'otherUserAvatarUrl': avatarUrl,
+        'lastMessage': text,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+
+    await batch.commit();
+  }
+
+  Future<void> toggleDirectReaction(
+      String conversationId, String messageId, String emoji) async {
+    final uid = _uid;
+    final ref = _dmDoc(conversationId).collection('messages').doc(messageId);
+    final doc = await ref.get();
+    final rawReactions =
+        Map<String, dynamic>.from(doc.data()?['reactions'] as Map? ?? {});
+    final uids = List<String>.from(rawReactions[emoji] as List? ?? []);
+    if (uids.contains(uid)) {
+      uids.remove(uid);
+    } else {
+      uids.add(uid);
+    }
+    if (uids.isEmpty) {
+      rawReactions.remove(emoji);
+    } else {
+      rawReactions[emoji] = uids;
+    }
+    await ref.update({'reactions': rawReactions});
   }
 
   // ── MESSAGES ────────────────────────────────────────────────────────────────

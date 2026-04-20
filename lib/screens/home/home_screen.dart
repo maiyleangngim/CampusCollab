@@ -59,7 +59,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Image.asset('assets/images/logo.png', width: 28),
                   const SizedBox(width: 8),
-                  Text('CampusCollab', style: AppTheme.titleStyle),
+                  Text('CampusCollab',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          height: 1.4)),
                 ],
               ),
               actions: [
@@ -68,9 +73,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   margin: const EdgeInsets.only(right: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF8E1),
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFFFD54F)),
+                    border: Border.all(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

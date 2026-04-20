@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../constants/app_routes.dart';
 import '../../theme/app_theme.dart';
 import '../../models/study_group.dart';
 import '../../services/firestore_service.dart';
@@ -369,7 +370,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0.5,
-        title: Text('Group Info', style: AppTheme.titleStyle),
+        title: Text('Group Info',
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.4)),
         leading: const BackButton(color: AppTheme.primary),
         actions: [
           if (_isAdminOrOwner && !_loadingMembers)
@@ -645,6 +651,14 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                                   indent: 60,
                                   color: AppTheme.divider),
                             ListTile(
+                              onTap: () {
+                                if (isMe) return;
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.userProfile,
+                                  arguments: m['uid'] as String,
+                                );
+                              },
                               leading: CircleAvatar(
                                 radius: 20,
                                 backgroundColor: AppTheme.primary

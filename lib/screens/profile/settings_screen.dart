@@ -17,7 +17,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _pushNotifications = true;
   bool _emailDigests = false;
-  bool _privateProfile = false;
 
   String _name = '';
   String _major = '';
@@ -94,12 +93,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             _buildSectionHeader("SECURITY & TRUST"),
             _buildSettingsContainer([
-              _buildSwitchTile(
-                icon: Icons.visibility_off_outlined,
-                title: "Private Profile",
-                subtitle: "Hide your profile from non-members",
-                value: _privateProfile,
-                onChanged: (val) => setState(() => _privateProfile = val),
+              _buildActionTile(
+                icon: Icons.privacy_tip_outlined,
+                title: "Privacy & Messaging",
+                onTap: () => Navigator.pushNamed(context, AppRoutes.privacySettings),
               ),
             ]),
             const SizedBox(height: 24),
@@ -393,15 +390,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF5F5),
+        color: AppTheme.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.15)),
+        border: Border.all(color: AppTheme.error.withValues(alpha: 0.2)),
       ),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-          child: Icon(Icons.logout, color: Colors.red, size: 20),
+          decoration: BoxDecoration(
+              color: AppTheme.error.withValues(alpha: 0.1),
+              shape: BoxShape.circle),
+          child: const Icon(Icons.logout, color: AppTheme.error, size: 20),
         ),
         title: Text(
           "Log Out",

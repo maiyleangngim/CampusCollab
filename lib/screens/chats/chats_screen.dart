@@ -15,9 +15,27 @@ class ChatsScreen extends StatefulWidget {
 }
 
 class _ChatsScreenState extends State<ChatsScreen> {
-  // null = 'All', 'unread' = Unread, otherwise a folder id
   String? _activeFolderId;
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final TextEditingController _searchCtrl = TextEditingController();
   final FirestoreService _firestore = FirestoreService();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _startSearch() => setState(() => _isSearching = true);
+
+  void _stopSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchQuery = '';
+      _searchCtrl.clear();
+    });
+  }
 
   void _openCreateGroup() async {
     final result = await Navigator.pushNamed(context, AppRoutes.createGroup);
@@ -388,21 +406,73 @@ class _ChatsScreenState extends State<ChatsScreen> {
           appBar: AppBar(
             backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0.5,
-            title: Text('Chats',
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22)),
+            leading: _isSearching
+                ? IconButton(
+                    icon: Icon(Icons.arrow_back,
+                        color: Theme.of(context).colorScheme.onSurface),
+                    onPressed: _stopSearch,
+                  )
+                : null,
+            title: _isSearching
+                ? TextField(
+                    controller: _searchCtrl,
+                    autofocus: true,
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                    decoration: InputDecoration(
+                      hintText: 'Search chats...',
+                      hintStyle: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 16),
+                  )
+                : Text('Chats',
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22)),
             actions: [
-              IconButton(
-                icon: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurface),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon:
-                    Icon(Icons.edit_outlined, color: Theme.of(context).colorScheme.onSurface),
-                onPressed: _showCreateMenu,
-              ),
+              if (_isSearching && _searchQuery.isNotEmpty)
+                IconButton(
+                  icon: Icon(Icons.clear,
+                      color: Theme.of(context).colorScheme.onSurface),
+                  onPressed: () => setState(() {
+                    _searchQuery = '';
+                    _searchCtrl.clear();
+                  }),
+                )
+              else if (!_isSearching) ...[
+                IconButton(
+                  icon: Icon(Icons.mark_chat_unread_outlined,
+                      color: Theme.of(context).colorScheme.onSurface),
+                  onPressed: () => Navigator.pushNamed(
+                      context, AppRoutes.directMessages),
+                ),
+                IconButton(
+                  icon: Icon(Icons.person_search,
+                      color: Theme.of(context).colorScheme.onSurface),
+                  onPressed: () => Navigator.pushNamed(
+                      context, AppRoutes.userSearch),
+                ),
+                IconButton(
+                  icon: Icon(Icons.search,
+                      color: Theme.of(context).colorScheme.onSurface),
+                  onPressed: _startSearch,
+                ),
+                IconButton(
+                  icon: Icon(Icons.edit_outlined,
+                      color: Theme.of(context).colorScheme.onSurface),
+                  onPressed: _showCreateMenu,
+                ),
+              ],
             ],
           ),
           body: Column(
@@ -489,11 +559,19 @@ class _ChatsScreenState extends State<ChatsScreen> {
                         : folders
                             .where((f) => f.id == _activeFolderId)
                             .firstOrNull;
-                    final groups = activeFolder == null
+                    final folderFiltered = activeFolder == null
                         ? allGroups
                         : allGroups
                             .where((g) =>
                                 activeFolder.groupIds.contains(g.id))
+                            .toList();
+                    final q = _searchQuery.trim().toLowerCase();
+                    final groups = q.isEmpty
+                        ? folderFiltered
+                        : folderFiltered
+                            .where((g) =>
+                                g.name.toLowerCase().contains(q) ||
+                                g.courseCode.toLowerCase().contains(q))
                             .toList();
 
                     if (allGroups.isEmpty) {
@@ -506,23 +584,32 @@ class _ChatsScreenState extends State<ChatsScreen> {
                     }
 
                     if (groups.isEmpty) {
+                      final isSearchEmpty = q.isNotEmpty;
                       return Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.folder_open,
-                                size: 48,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            Icon(
+                              isSearchEmpty
+                                  ? Icons.search_off
+                                  : Icons.folder_open,
+                              size: 48,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                             const SizedBox(height: 12),
                             Text(
-                              'No groups in "${activeFolder?.name}"',
+                              isSearchEmpty
+                                  ? 'No results for "$q"'
+                                  : 'No groups in "${activeFolder?.name}"',
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.onSurface,
                                   fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Long-press a group chat to add it here.',
+                              isSearchEmpty
+                                  ? 'Try a different name or course code.'
+                                  : 'Long-press a group chat to add it here.',
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   fontSize: 13),
@@ -642,10 +729,10 @@ class _FilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? AppTheme.primary : AppTheme.background,
+          color: active ? AppTheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: active ? AppTheme.primary : AppTheme.divider),
+              color: active ? AppTheme.primary : Theme.of(context).colorScheme.outlineVariant),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

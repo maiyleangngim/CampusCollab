@@ -64,7 +64,12 @@ class _GroupTasksScreenState extends State<GroupTasksScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Group Tasks', style: AppTheme.titleStyle),
+            Text('Group Tasks',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.4)),
             Text(
               widget.groupName,
               style: TextStyle(

@@ -108,7 +108,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Image.asset('assets/images/logo.png', width: 28),
             const SizedBox(width: 8),
-            Text('CampusCollab', style: AppTheme.titleStyle),
+            Text('CampusCollab',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.4)),
           ],
         ),
         actions: [
@@ -146,6 +151,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   const SizedBox(height: 20),
                   _buildProfileCard(),
+                  const SizedBox(height: 24),
+                  _buildDirectConnectionActions(),
                   const SizedBox(height: 24),
                   _buildGroupsSummaryCard(),
                   const SizedBox(height: 24),
@@ -280,18 +287,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
+                color: AppTheme.onlineGreen.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.circle, color: Color(0xFF22C55E), size: 8),
-                  SizedBox(width: 6),
+                  const Icon(Icons.circle, color: AppTheme.onlineGreen, size: 8),
+                  const SizedBox(width: 6),
                   Text(
                     'Looking for a group',
                     style: TextStyle(
-                      color: Color(0xFF15803D),
+                      color: AppTheme.onlineGreen,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -397,6 +404,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDirectConnectionActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.userSearch),
+            icon: const Icon(Icons.person_search),
+            label: const Text('Find Users'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.directMessages),
+            icon: const Icon(Icons.mark_chat_unread_outlined),
+            label: const Text('Direct Messages'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onSurface,
+              side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

@@ -14,4 +14,9 @@ class AppRoutes {
   static const String groupTasks    = '/group-tasks';   // arg: StudyGroup
   static const String resourceVault = '/resource-vault';// arg: StudyGroup
   static const String pomodoro      = '/pomodoro';      // arg: StudyGroup
+  static const String directMessages = '/direct-messages';
+  static const String directMessageDetail = '/direct-message-detail'; // arg: Map<String, dynamic>
+  static const String userProfile = '/user-profile'; // arg: String uid
+  static const String privacySettings = '/privacy-settings';
+  static const String userSearch = '/user-search';
 }

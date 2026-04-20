@@ -184,6 +184,7 @@ Fill in four constants in `lib/services/email_service.dart`:
 - Theme persistence: theme mode must be stored locally (device-level) and restored on app start; use local storage in `ThemeProvider` rather than transient in-memory state.
 - Chat input regression: hardcoded `Colors.white` / `Colors.grey` in `ChatInputBar` ignored dark mode. Input bar/container colors must always derive from `ColorScheme` and `scaffoldBackgroundColor`.
 - Chat navigation regression: every primary screen (`Home`, `Discover`, `Chats`, `Calendar`, `Profile`) must keep a working bottom nav path, otherwise users can feel stuck on a screen.
+- AppBar title regression: static `AppTheme.*Style` constants (e.g. `titleStyle`) hardcode `color: textPrimary` (`#111827`). In dark mode the AppBar background is also `#111827`, making the title text invisible. Never pass a static `AppTheme.*Style` directly to an AppBar `Text` title — always inline a `TextStyle` with `color: Theme.of(context).colorScheme.onSurface`.
 
 ---
 

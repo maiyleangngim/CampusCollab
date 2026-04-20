@@ -106,7 +106,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: AppTheme.spacingXl + 8),
 
                 // ── Heading ───────────────────────────────────────────────────
-                Text('Welcome back', style: AppTheme.headingStyle),
+                Text('Welcome back',
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        height: 1.3)),
                 const SizedBox(height: 6),
                 Text(
                   'Sign in to continue collaborating.',
@@ -125,10 +130,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   autocorrect: false,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'you@campus.edu',
                     prefixIcon: Icon(Icons.email_outlined,
-                        color: AppTheme.textTertiary),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Enter your email';
@@ -169,13 +174,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     hintText: '••••••••',
                     prefixIcon: Icon(Icons.lock_outline,
-                        color: AppTheme.textTertiary),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _passwordVisible
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: AppTheme.textTertiary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         size: 20,
                       ),
                       onPressed: () =>

@@ -99,7 +99,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: AppTheme.spacingXl + 8),
 
                 // ── Heading ───────────────────────────────────────────────────
-                Text('Create an account', style: AppTheme.headingStyle),
+                Text('Create an account',
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        height: 1.3)),
                 const SizedBox(height: 6),
                 Text(
                   'Fill in your details to get started.',
@@ -117,10 +122,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'John Doe',
                     prefixIcon: Icon(Icons.person_outline,
-                        color: AppTheme.textTertiary),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Enter your name' : null,
@@ -135,10 +140,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   autocorrect: false,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'you@campus.edu',
                     prefixIcon: Icon(Icons.email_outlined,
-                        color: AppTheme.textTertiary),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Enter your email';
@@ -158,15 +163,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     hintText: '••••••••',
                     helperText: 'Min. 8 chars, letters, numbers & symbols',
-                    helperStyle: AppTheme.captionStyle,
+                    helperStyle: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12),
                     prefixIcon: Icon(Icons.lock_outline,
-                        color: AppTheme.textTertiary),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _passwordVisible
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: AppTheme.textTertiary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         size: 20,
                       ),
                       onPressed: () =>
@@ -189,13 +196,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     hintText: '••••••••',
                     prefixIcon: Icon(Icons.lock_outline,
-                        color: AppTheme.textTertiary),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _confirmPasswordVisible
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: AppTheme.textTertiary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         size: 20,
                       ),
                       onPressed: () => setState(() =>

@@ -119,7 +119,12 @@ class _PomodoroScreenState extends State<PomodoroScreen> with TickerProviderStat
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Pomodoro Timer', style: AppTheme.titleStyle),
+            Text('Pomodoro Timer',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.4)),
             Text(widget.groupName, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
           ],
         ),
