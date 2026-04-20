@@ -114,6 +114,7 @@ class AuthService {
         'subjects': [],
         'avatarUrl': user.photoURL,
         'isLookingForGroup': false,
+        'emailVerified': true, // Google/anonymous users are pre-verified
         'createdAt': FieldValue.serverTimestamp(),
       });
     }

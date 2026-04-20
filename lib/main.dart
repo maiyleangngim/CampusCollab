@@ -40,47 +40,57 @@ class CampusCollabApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) => MaterialApp(
-          title: 'CampusCollab',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: themeProvider.themeMode,
-          home: const AuthGate(),
-          routes: {
-            AppRoutes.login:       (_) => const LoginScreen(),
-            AppRoutes.register:    (_) => const RegisterScreen(),
-            AppRoutes.discover:    (_) => const DiscoverScreen(),
-            AppRoutes.calendar:    (_) => const CalendarScreen(),
-            AppRoutes.home:        (_) => const HomeScreen(),
-            AppRoutes.chats:       (_) => const ChatsScreen(),
-            AppRoutes.profile:     (_) => const ProfileScreen(),
-            AppRoutes.createGroup: (_) => const CreateGroupScreen(),
-          },
-          onGenerateRoute: (settings) {
-            switch (settings.name) {
-              case AppRoutes.chat:
-                final group = settings.arguments as StudyGroup;
-                return MaterialPageRoute(builder: (_) => ChatDetailScreen(group: group));
-              case AppRoutes.groupDetail:
-                final group = settings.arguments as StudyGroup;
-                return MaterialPageRoute(builder: (_) => GroupDetailScreen(group: group));
-              case AppRoutes.groupTasks:
-                final group = settings.arguments as StudyGroup;
-                return MaterialPageRoute(
-                    builder: (_) => GroupTasksScreen(groupId: group.id, groupName: group.name));
-              case AppRoutes.resourceVault:
-                final group = settings.arguments as StudyGroup;
-                return MaterialPageRoute(
-                    builder: (_) => ResourceVaultScreen(groupId: group.id, groupName: group.name));
-              case AppRoutes.pomodoro:
-                final group = settings.arguments as StudyGroup;
-                return MaterialPageRoute(
-                    builder: (_) => PomodoroScreen(groupId: group.id, groupName: group.name));
-            }
-            return null;
-          },
-        ),
+        builder: (context, themeProvider, _) {
+          // If the user selected 'System' mode, we use our custom 'warm' theme
+          // instead of the standard material light/dark logic for that specific toggle.
+          final currentTheme = themeProvider.themeMode == ThemeMode.system
+              ? AppTheme.system
+              : (themeProvider.themeMode == ThemeMode.dark
+                  ? AppTheme.dark
+                  : AppTheme.light);
+
+          return MaterialApp(
+            title: 'CampusCollab',
+            debugShowCheckedModeBanner: false,
+            theme: currentTheme,
+            // We use 'theme' as the single source when system is forced to 'warm'
+            // or when light/dark are explicitly chosen.
+            home: const AuthGate(),
+            routes: {
+              AppRoutes.login:       (_) => const LoginScreen(),
+              AppRoutes.register:    (_) => const RegisterScreen(),
+              AppRoutes.discover:    (_) => const DiscoverScreen(),
+              AppRoutes.calendar:    (_) => const CalendarScreen(),
+              AppRoutes.home:        (_) => const HomeScreen(),
+              AppRoutes.chats:       (_) => const ChatsScreen(),
+              AppRoutes.profile:     (_) => const ProfileScreen(),
+              AppRoutes.createGroup: (_) => const CreateGroupScreen(),
+            },
+            onGenerateRoute: (settings) {
+              switch (settings.name) {
+                case AppRoutes.chat:
+                  final group = settings.arguments as StudyGroup;
+                  return MaterialPageRoute(builder: (_) => ChatDetailScreen(group: group));
+                case AppRoutes.groupDetail:
+                  final group = settings.arguments as StudyGroup;
+                  return MaterialPageRoute(builder: (_) => GroupDetailScreen(group: group));
+                case AppRoutes.groupTasks:
+                  final group = settings.arguments as StudyGroup;
+                  return MaterialPageRoute(
+                      builder: (_) => GroupTasksScreen(groupId: group.id, groupName: group.name));
+                case AppRoutes.resourceVault:
+                  final group = settings.arguments as StudyGroup;
+                  return MaterialPageRoute(
+                      builder: (_) => ResourceVaultScreen(groupId: group.id, groupName: group.name));
+                case AppRoutes.pomodoro:
+                  final group = settings.arguments as StudyGroup;
+                  return MaterialPageRoute(
+                      builder: (_) => PomodoroScreen(groupId: group.id, groupName: group.name));
+              }
+              return null;
+            },
+          );
+        },
       ),
     );
   }

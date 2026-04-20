@@ -127,10 +127,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildUserHeader() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -146,7 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+              color: colorScheme.surfaceVariant,
               borderRadius: BorderRadius.circular(16),
               image: _avatarUrl != null
                   ? DecorationImage(
@@ -156,7 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : null,
             ),
             child: _avatarUrl == null
-                ? Icon(Icons.person, color: AppTheme.primary, size: 36)
+                ? Icon(Icons.person, color: colorScheme.onSurfaceVariant, size: 36)
                 : null,
           ),
           const SizedBox(width: 16),
@@ -169,14 +170,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 if (_major.isNotEmpty)
                   Text(
                     _major,
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                       fontSize: 13,
                     ),
                   ),
@@ -462,8 +463,3 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
-
-
-
-
-

@@ -17,10 +17,17 @@ class AppAuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// True for anonymous users, or email/password users whose Firestore
-  /// `emailVerified` field is true (set by OtpService after code verification).
-  bool get isEmailVerified =>
-      _user == null ? false : (_user!.isAnonymous || _emailVerifiedInFirestore);
+  /// True for anonymous users, Google-authenticated users (Google guarantees
+  /// email ownership), or email/password users whose Firestore `emailVerified`
+  /// field is true (set by OtpService after code verification).
+  bool get isEmailVerified {
+    if (_user == null) return false;
+    if (_user!.isAnonymous) return true;
+    final isGoogleUser = _user!.providerData
+        .any((p) => p.providerId == 'google.com');
+    if (isGoogleUser) return true;
+    return _emailVerifiedInFirestore;
+  }
 
   /// Re-reads the `emailVerified` flag from Firestore.
   /// Call this right after a successful OTP verification.
@@ -39,7 +46,7 @@ class AppAuthProvider extends ChangeNotifier {
       if (user != null && !user.isAnonymous) {
         try {
           final doc =
-              await _db.collection('users').doc(user.uid).get();
+          await _db.collection('users').doc(user.uid).get();
           _emailVerifiedInFirestore = doc.data()?['emailVerified'] == true;
         } catch (_) {
           _emailVerifiedInFirestore = false;
@@ -77,7 +84,7 @@ class AppAuthProvider extends ChangeNotifier {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'wrong-password') {
         _error =
-            'This email is already registered. Use the original password to continue verification, or reset your password.';
+        'This email is already registered. Use the original password to continue verification, or reset your password.';
       } else {
         _error = _friendlyError(e.code);
       }
@@ -86,7 +93,7 @@ class AppAuthProvider extends ChangeNotifier {
       final msg = e.toString();
       if (msg.contains('Email template recipient is not configured')) {
         _error =
-            'Email verification is not configured yet. Please ask the admin to finish EmailJS template setup.';
+        'Email verification is not configured yet. Please ask the admin to finish EmailJS template setup.';
       } else if (msg.contains('recipient address is empty')) {
         _error = 'Verification email failed because recipient email is missing.';
       } else {
